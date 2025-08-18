@@ -2,19 +2,35 @@
   "name": "pg-listing",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "next dev",
+    "dev": "kill-port 3000 && next dev",
+    "dev:socket": "kill-port 3000 && tsc-alias -p jsconfig.json && node server.js",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.848.0",
+    "@aws-sdk/s3-request-presigner": "^3.848.0",
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.2",
+    "dotenv": "^17.0.1",
+    "framer-motion": "^12.23.0",
+    "lucide-react": "^0.525.0",
+    "mongoose": "^8.16.1",
+    "next": "15.3.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "next": "15.3.4"
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
+    "validator": "^13.15.15"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4"
+    "kill-port": "^2.0.1",
+    "module-alias": "^2.2.3",
+    "tailwindcss": "^4",
+    "tsc-alias": "^1.8.16"
   }
 }
