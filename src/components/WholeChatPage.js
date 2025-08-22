@@ -2,6 +2,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { socket } from "@/lib/socket";
+import { getPgByPgId } from "@/hooks/useFunc";
 
 export default function WholeChatPage({
   chats,
@@ -43,96 +44,98 @@ export default function WholeChatPage({
     const currentUser = JSON.parse(localStorage.getItem("user"))._id;
     const targetedPgId = chat.pgId;
     setToSendUser(targetedUserId);
+    const targetedPg = getPgByPgId(targetedPgId);
     // Join the chat room for the selected conversation
 
     socket.emit("join-chat", {
       currentUser: currentUser,
       targetUser: targetedUserId,
       pgId: targetedPgId,
+      pgName: targetedPg.name,
     });
   };
   return (
-    <div className="h-full bg-[var(--bg)] text-[var(--text)] grid grid-cols-[auto_1fr]">
+    <div className="fixed inset-0 top-16 bg-[var(--bg)] text-[var(--text)] grid grid-cols-[auto_1fr] overflow-hidden">
       <div
         key={chats?.userId}
-        className=" flex flex-col w-64 border-r border-[var(--border)] bg-[var(--dropdown)] p-4"
+        className="flex flex-col w-64 border-r border-[var(--border)] bg-[var(--dropdown)] p-4 h-full"
       >
-        <h2 className="text-lg font-bold text-[var(--highlight)] mb-4">
+        <h2 className="text-lg font-bold text-[var(--highlight)] mb-4 flex-shrink-0">
           Chats
         </h2>
-        {chats.length != 0 ? (
-          chats.map((chat) => {
-            const isActive = currChat?.pgId === chat.pgId;
-            return (
-              <Link
-                href={`/chats?pgId=${chat.pgId}`}
-                key={chat.pgId}
-                onClick={(e) => {
-                  if (isActive) {
-                    e.preventDefault();
-                    return;
-                  }
-                  handleClick(chat);
-                }}
-                className={`p-2 rounded mr-1.5 font-bold transition-all ${
-                  isActive
-                    ? "bg-[var(--highlight)] text-[var(--bg)] cursor-default"
-                    : "cursor-pointer hover:bg-[var(--hover)] hover:text-[var(--nav-text)]"
-                }`}
-              >
-                {chat.pgId}
-              </Link>
-            );
-          })
-        ) : (
-          <p>No chats</p>
-        )}
+        <div className="flex-1 overflow-y-auto">
+          {chats.length != 0 ? (
+            chats.map((chat) => {
+              const isActive = currChat?.pgId === chat.pgId;
+              return (
+                <Link
+                  href={`/chats?pgId=${chat.pgId}`}
+                  key={chat.pgId}
+                  onClick={(e) => {
+                    if (isActive) {
+                      e.preventDefault();
+                      return;
+                    }
+                    handleClick(chat);
+                  }}
+                  className={`p-2 rounded mr-1.5 font-bold transition-all block mb-2 ${
+                    isActive
+                      ? "bg-[var(--highlight)] text-[var(--bg)] cursor-default"
+                      : "cursor-pointer hover:bg-[var(--hover)] hover:text-[var(--nav-text)]"
+                  }`}
+                >
+                  {chat.pgName}
+                </Link>
+              );
+            })
+          ) : (
+            <p>No chats</p>
+          )}
+        </div>
       </div>
       {toSendUser ? (
-        <div className="w-full flex flex-col">
-          <div className="h-full">
+        <div className="h-full flex flex-col overflow-hidden">
+          {/* Fixed Header */}
+          <div className="flex-shrink-0 p-6 pb-0">
+            <h2 className="text-xl font-bold text-[var(--highlight)] mb-4">
+              {user?.name}'s Chat
+            </h2>
+          </div>
+
+          {/* Scrollable Messages Area */}
+          <div className="flex-1 overflow-y-auto p-6 pt-0 min-h-0 scrollbar-thin scrollbar-thumb-[var(--text)] scrollbar-track-transparent">
             {messages.length === 0 ? (
-              <div
-                key={user._id}
-                className="h-full flex-1 flex items-center justify-center text-[var(--text)]"
-              >
+              <div className="h-full flex items-center justify-center text-[var(--text)]">
                 <p className="text-lg">No messages yet</p>
               </div>
             ) : (
-              <main className="flex-1 p-6 w-full flex flex-col">
-                <h2 className="text-xl font-bold text-[var(--highlight)] mb-4">
-                  {user?.name}'s Chat
-                </h2>
-                {/* Messages and Form Container */}
-                <div className="flex flex-col flex-1 space-y-2">
-                  {messages.map((msg, index) => {
-                    return user?._id === msg.message.senderId ? (
-                      <div
-                        key={index}
-                        className="flex items-center justify-end"
-                      >
-                        <div className="bg-[var(--hover)] text-[var(--text)] rounded-lg p-2 max-w-xs">
-                          {msg.message.message}
-                        </div>
+              <div className="flex flex-col space-y-2">
+                {messages.map((msg, index) => {
+                  return user?._id === msg.message.senderId ? (
+                    <div key={index} className="flex items-center justify-end">
+                      <div className="bg-[var(--hover)] text-[var(--text)] rounded-lg p-2 max-w-xs">
+                        {msg.message.message}
                       </div>
-                    ) : (
-                      <div key={index} className="flex items-center">
-                        <div className="bg-[var(--hover)] text-[var(--text)] rounded-lg p-2 max-w-xs">
-                          {msg.message.message}
-                        </div>
+                    </div>
+                  ) : (
+                    <div key={index} className="flex items-center">
+                      <div className="bg-[var(--hover)] text-[var(--text)] rounded-lg p-2 max-w-xs">
+                        {msg.message.message}
                       </div>
-                    );
-                  })}
-                </div>
-              </main>
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
-          <div>
+
+          {/* Fixed Input Form */}
+          <div className="flex-shrink-0">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
-              className="mt-auto w-auto bg-[var(--bg)] p-4 border-t border-[var(--border)]"
+              className="bg-[var(--bg)] p-4 border-t border-[var(--border)]"
             >
               <form
                 onSubmit={handleSubmit}

@@ -96,7 +96,7 @@ export default function ChatPage() {
       const currentUser = user._id
       try {
         const response = await fetch(
-          `/api/chats/message?currentUser=${currentUser}&targetedUserId=${targetedUserId}`,
+          `/api/chats/message?currentUser=${currentUser}&targetedUserId=${targetedUserId}&targetedPgId=${targetedPgId}`,
           {
             method: "GET",
             headers: {
@@ -113,10 +113,10 @@ export default function ChatPage() {
         console.error("Error fetching messages:", err);
       }
     };
-    if(user && targetedUserId){
+    if(user && targetedUserId && targetedPgId) {
       allMessages()
     }
-  },[user,targetedUserId])
+  },[user,targetedUserId,targetedPgId]);
 
   return user ? (
     <div className="h-full">

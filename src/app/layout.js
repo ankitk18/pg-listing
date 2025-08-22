@@ -24,7 +24,7 @@ export default function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[var(--bg)] text-[var(--text)]`}
       >
         <div className="h-screen grid grid-rows-[auto_1fr]">
-          <div className="sticky w-full top-0 z-1 h-full">
+          <div className="sticky w-full top-0 z-1 h-auto">
             <ComplexNavbar />
           </div>
           <div className="block h-full">{children}</div>

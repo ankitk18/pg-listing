@@ -1,44 +1,76 @@
 "use client";
 import PgCard from "@/components/PgCard";
+import Popup from "@/components/Popup";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { socket } from "@/lib/socket";
-import { getUserIdByPgId } from "@/hooks/useFunc";
+import { getPgByPgId, getUserIdByPgId } from "@/hooks/useFunc";
 
 export default function Home() {
   const [pgs, setPgs] = useState(null);
-  const handleClick = async (pgId) => {
-    if(!localStorage.getItem("user")) {
+  const [showPopup, setShowPopup] = useState(false);
+  const handleClick = async (e, pgId) => {
+    // Always prevent default navigation first
+    e.preventDefault();
+
+    if (!localStorage.getItem("user")) {
       return <NotLoggedIn />;
     }
+
     const currentUser = JSON.parse(localStorage.getItem("user"));
-    const {user} = await getUserIdByPgId(pgId);
+    const { user } = await getUserIdByPgId(pgId);
+    const {pg} = await getPgByPgId(pgId);
+    //popup if user and currentUser are same
+    if (user._id === currentUser._id) {
+      setShowPopup(true);
+      return;
+    }
+    // If it's a valid chat, navigate manually
     socket.emit("join-chat", {
       currentUser: currentUser._id,
       targetUser: user._id,
-      pgId: pgId
+      pgId: pgId,
+      pgName: pg.name,
     });
 
-  }
+    // Navigate to the chat page
+    window.location.href = `/chats`;
+  };
   useEffect(() => {
     fetch("/api/pg")
       .then((res) => res.json())
       .then((data) => setPgs(data))
       .catch((err) => console.error("Error fetching PGs:", err));
   }, []);
-  return pgs ? (
-    <div className="p-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {pgs.map((pg) => (
-          <Link href={`/chats?pgId=${pg._id}`} key={pg._id} className="block" onClick={() => handleClick(pg._id)}>
-            <PgCard key={pg.name} pg={pg} />
-          </Link>
-        ))}
-      </div>
-    </div>
-  ) : (
-    <div className="flex items-center justify-center h-screen">
-      <p className="text-gray-500">Loading...</p>
-    </div>
+  return (
+    <>
+      {pgs ? (
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {pgs.map((pg) => (
+              <Link
+                href={`/chats?pgId=${pg._id}`}
+                key={pg._id}
+                className="block"
+                onClick={(e) => handleClick(e, pg._id)}
+              >
+                <PgCard key={pg.name} pg={pg} />
+              </Link>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center justify-center h-screen">
+          <p className="text-gray-500">Loading...</p>
+        </div>
+      )}
+
+      <Popup
+        isOpen={showPopup}
+        onClose={() => setShowPopup(false)}
+        title="Cannot Start Chat"
+        message="You cannot chat with yourself. Please select a different PG to start a conversation."
+      />
+    </>
   );
 }
