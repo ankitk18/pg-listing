@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
 import { socket } from "@/lib/socket";
 import { getPgByPgId } from "@/hooks/useFunc";
 
@@ -13,6 +13,36 @@ export default function WholeChatPage({
   pgId,
 }) {
   const [currChat, setCurrChat] = useState();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+  const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
+
+  // Handle window resize for responsive sidebar
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth >= 768);
+    };
+
+    // Set initial value
+    handleResize();
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // Focus input when chat is selected
+  useEffect(() => {
+    if (toSendUser && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [toSendUser]);
   const handleSubmit = (e) => {
     e.preventDefault();
     const msg = e.target[0].value;
@@ -35,6 +65,11 @@ export default function WholeChatPage({
       pgId: pgId,
     });
     e.target[0].value = ""; // Clear input
+
+    // Close sidebar on mobile after sending message
+    if (!isDesktop) {
+      setIsSidebarOpen(false);
+    }
   };
   const handleClick = (chat) => {
     setCurrChat(chat);
@@ -55,114 +90,295 @@ export default function WholeChatPage({
     });
   };
   return (
-    <div className="fixed inset-0 top-16 bg-[var(--bg)] text-[var(--text)] grid grid-cols-[auto_1fr] overflow-hidden">
-      <div
-        key={chats?.userId}
-        className="flex flex-col w-64 border-r border-[var(--border)] bg-[var(--dropdown)] p-4 h-full"
+    <div className="fixed inset-0 top-16 bg-[var(--bg)] text-[var(--text)] flex overflow-hidden">
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        className="md:hidden fixed top-20 right-0 mr-3 z-50 bg-[var(--highlight)] text-[var(--bg)] p-2 rounded-lg shadow-lg"
       >
-        <h2 className="text-lg font-bold text-[var(--highlight)] mb-4 flex-shrink-0">
-          Chats
-        </h2>
-        <div className="flex-1 overflow-y-auto">
-          {chats.length != 0 ? (
-            chats.map((chat) => {
-              const isActive = currChat?.pgId === chat.pgId;
-              return (
-                <Link
-                  href={`/chats?pgId=${chat.pgId}`}
-                  key={chat.pgId}
-                  onClick={(e) => {
-                    if (isActive) {
-                      e.preventDefault();
-                      return;
-                    }
-                    handleClick(chat);
-                  }}
-                  className={`p-2 rounded mr-1.5 font-bold transition-all block mb-2 ${
-                    isActive
-                      ? "bg-[var(--highlight)] text-[var(--bg)] cursor-default"
-                      : "cursor-pointer hover:bg-[var(--hover)] hover:text-[var(--nav-text)]"
-                  }`}
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M4 6h16M4 12h16M4 18h16"
+          />
+        </svg>
+      </button>
+
+      {/* Sidebar */}
+      <AnimatePresence>
+        {(isSidebarOpen ||
+          (typeof window !== "undefined" && window.innerWidth >= 768)) && (
+          <motion.div
+            initial={{ x: -300 }}
+            animate={{ x: 0 }}
+            exit={{ x: -300 }}
+            transition={{ duration: 0.3 }}
+            className="flex flex-col w-64 md:w-72 lg:w-80 border-r border-[var(--border)] bg-[var(--dropdown)] p-4 h-full absolute md:relative z-40"
+          >
+            <div className="flex items-center justify-between mb-4 flex-shrink-0">
+              <h2 className="text-lg md:text-xl font-bold text-[var(--highlight)]">
+                Chats
+              </h2>
+              <button
+                onClick={() => setIsSidebarOpen(false)}
+                className="md:hidden text-[var(--text)] hover:text-[var(--highlight)]"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  {chat.pgName}
-                </Link>
-              );
-            })
-          ) : (
-            <p>No chats</p>
-          )}
-        </div>
-      </div>
-      {toSendUser ? (
-        <div className="h-full flex flex-col overflow-hidden">
-          {/* Fixed Header */}
-          <div className="flex-shrink-0 p-6 pb-0">
-            <h2 className="text-xl font-bold text-[var(--highlight)] mb-4">
-              {user?.name}'s Chat
-            </h2>
-          </div>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
 
-          {/* Scrollable Messages Area */}
-          <div className="flex-1 overflow-y-auto p-6 pt-0 min-h-0 scrollbar-thin scrollbar-thumb-[var(--text)] scrollbar-track-transparent">
-            {messages.length === 0 ? (
-              <div className="h-full flex items-center justify-center text-[var(--text)]">
-                <p className="text-lg">No messages yet</p>
-              </div>
-            ) : (
-              <div className="flex flex-col space-y-2">
-                {messages.map((msg, index) => {
-                  return user?._id === msg.message.senderId ? (
-                    <div key={index} className="flex items-center justify-end">
-                      <div className="bg-[var(--hover)] text-[var(--text)] rounded-lg p-2 max-w-xs">
-                        {msg.message.message}
-                      </div>
-                    </div>
-                  ) : (
-                    <div key={index} className="flex items-center">
-                      <div className="bg-[var(--hover)] text-[var(--text)] rounded-lg p-2 max-w-xs">
-                        {msg.message.message}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+            <div
+              className="flex-1 overflow-y-auto custom-scrollbar"
+              style={{
+                scrollbarWidth: "thin",
+                scrollbarColor: "var(--text) transparent",
+              }}
+            >
+              {chats.length != 0 ? (
+                <motion.div layout className="space-y-2">
+                  {chats.map((chat, index) => {
+                    const isActive = currChat?.pgId === chat.pgId;
+                    return (
+                      <motion.div
+                        key={chat.pgId}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                      >
+                        <Link
+                          href={`/chats?pgId=${chat.pgId}`}
+                          onClick={(e) => {
+                            if (isActive) {
+                              e.preventDefault();
+                              return;
+                            }
+                            handleClick(chat);
+                          }}
+                          className={`p-3 rounded-lg font-medium transition-all block ${
+                            isActive
+                              ? "bg-[var(--highlight)] text-[var(--bg)] cursor-default shadow-lg"
+                              : "cursor-pointer hover:bg-[var(--hover)] hover:text-[var(--nav-text)] hover:shadow-md"
+                          }`}
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-[var(--border)] rounded-full flex items-center justify-center">
+                              <span className="text-sm font-bold">
+                                {chat.pgName?.charAt(0)?.toUpperCase() || "P"}
+                              </span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold truncate">
+                                {chat.pgName}
+                              </p>
+                              <p className="text-xs opacity-70 truncate">
+                                PG Chat
+                              </p>
+                            </div>
+                          </div>
+                        </Link>
+                      </motion.div>
+                    );
+                  })}
+                </motion.div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-[var(--text)] opacity-70">
+                    No chats available
+                  </p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-          {/* Fixed Input Form */}
-          <div className="flex-shrink-0">
+      {/* Overlay for mobile */}
+      {isSidebarOpen && (
+        <div
+          className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-30"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col overflow-hidden ml-0 md:ml-0">
+        {toSendUser ? (
+          <>
+            {/* Chat Header */}
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex-shrink-0 p-4 md:p-6 pb-2 border-b border-[var(--border)] bg-[var(--dropdown)]"
+            >
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-[var(--highlight)] rounded-full flex items-center justify-center">
+                  <span className="text-[var(--bg)] font-bold">
+                    {user?.name?.charAt(0)?.toUpperCase() || "U"}
+                  </span>
+                </div>
+                <div>
+                  <h2 className="text-lg md:text-xl font-bold text-[var(--highlight)]">
+                    {currChat?.pgName || "Chat"}
+                  </h2>
+                  <p className="text-sm text-[var(--text)] opacity-70">
+                    {user?.name}'s conversation
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Messages Area */}
+            <div
+              className="flex-1 overflow-y-auto p-4 md:p-6 pt-4 min-h-0 custom-scrollbar"
+              style={{
+                scrollbarWidth: "thin",
+                scrollbarColor: "var(--text) transparent",
+              }}
+            >
+              {messages.length === 0 ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="h-full flex flex-col items-center justify-center text-[var(--text)]"
+                >
+                  <div className="text-6xl mb-4">💬</div>
+                  <p className="text-lg md:text-xl font-medium">
+                    No messages yet
+                  </p>
+                  <p className="text-sm opacity-70 mt-2">
+                    Start the conversation!
+                  </p>
+                </motion.div>
+              ) : (
+                <div className="flex flex-col space-y-3">
+                  <AnimatePresence>
+                    {messages.map((msg, index) => {
+                      const isOwn = user?._id === msg.message.senderId;
+                      return (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          transition={{ delay: index * 0.05 }}
+                          className={`flex ${
+                            isOwn ? "justify-end" : "justify-start"
+                          }`}
+                        >
+                          <div
+                            className={`max-w-xs md:max-w-md lg:max-w-lg p-3 rounded-2xl shadow-lg ${
+                              isOwn
+                                ? "bg-[var(--highlight)] text-[var(--bg)] rounded-br-md"
+                                : "bg-[var(--dropdown)] text-[var(--text)] rounded-bl-md border border-[var(--border)]"
+                            }`}
+                          >
+                            <p className="text-sm md:text-base leading-relaxed">
+                              {msg.message.message}
+                            </p>
+                            <p
+                              className={`text-xs mt-1 ${
+                                isOwn
+                                  ? "text-[var(--bg)] opacity-70"
+                                  : "text-[var(--text)] opacity-50"
+                              }`}
+                            >
+                              {new Date(
+                                msg.message.timeStamp || Date.now()
+                              ).toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </p>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </AnimatePresence>
+                  <div ref={messagesEndRef} />
+                </div>
+              )}
+            </div>
+
+            {/* Input Form */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className="bg-[var(--bg)] p-4 border-t border-[var(--border)]"
+              className="flex-shrink-0 bg-[var(--dropdown)] p-4 md:p-6 pt-4 border-t border-[var(--border)]"
             >
               <form
                 onSubmit={handleSubmit}
-                className="flex items-center space-x-2"
+                className="flex items-end space-x-3"
               >
-                <input
-                  type="text"
-                  placeholder="Type a message..."
-                  className="flex-1 p-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] focus:ring-2 focus:ring-[var(--highlight)] focus:outline-none"
-                />
+                <div className="flex-1 relative">
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    placeholder="Type a message..."
+                    className="w-full p-3 md:p-4 pr-12 rounded-2xl border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] focus:ring-2 focus:ring-[var(--highlight)] focus:outline-none resize-none text-sm md:text-base"
+                  />
+                </div>
                 <motion.button
                   type="submit"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="bg-[var(--highlight)] text-[var(--bg)] px-4 py-2 rounded-lg font-bold shadow-lg hover:opacity-90 transition"
+                  className="bg-[var(--highlight)] text-[var(--bg)] p-3 md:p-4 rounded-2xl font-bold shadow-lg hover:opacity-90 transition-all"
                 >
-                  Send
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                    />
+                  </svg>
                 </motion.button>
               </form>
             </motion.div>
-          </div>
-        </div>
-      ) : (
-        <div className="flex-1 flex items-center justify-center text-[var(--text)]">
-          <p className="text-lg">Select a chat to start messaging</p>
-        </div>
-      )}
+          </>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex-1 flex flex-col items-center justify-center text-[var(--text)] p-8"
+          >
+            <div className="text-8xl mb-6">💬</div>
+            <h3 className="text-xl md:text-2xl font-bold text-[var(--highlight)] mb-2">
+              Welcome to GradStay Chat
+            </h3>
+            <p className="text-base md:text-lg opacity-70 text-center max-w-md">
+              Select a chat from the sidebar to start messaging with PG owners
+            </p>
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="md:hidden mt-6 bg-[var(--highlight)] text-[var(--bg)] px-6 py-3 rounded-lg font-medium"
+            >
+              View Chats
+            </button>
+          </motion.div>
+        )}
+      </div>
     </div>
   );
 }
