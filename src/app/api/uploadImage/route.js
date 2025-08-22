@@ -5,14 +5,14 @@ import crypto from "crypto";
 import dotenv from "dotenv";
 dotenv.config();
 
-const randomString = (length=16) => {
+const randomString = (length = 16) => {
   return crypto.randomBytes(length).toString("hex");
 };
 const s3Client = new S3Client({
   region: process.env.AWS_BUCKET_REGION,
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY,
-    secretAccessKey: process.env.AWS_SECRET_KEY,
+    accessKeyId: process.env.PGAWS_ACCESS_KEY,
+    secretAccessKey: process.env.PGAWS_SECRET_KEY,
   },
 });
 
@@ -39,7 +39,9 @@ export async function POST(request) {
     const command = new PutObjectCommand(params);
     await s3Client.send(command);
 
-    const url = (await getSignedUrl(s3Client, command, { expiresIn: 3600 })).split("?")[0];
+    const url = (
+      await getSignedUrl(s3Client, command, { expiresIn: 3600 })
+    ).split("?")[0];
 
     return NextResponse.json({ url }, { status: 200 });
   } catch (error) {
@@ -49,5 +51,4 @@ export async function POST(request) {
       { status: 500 }
     );
   }
-
 }

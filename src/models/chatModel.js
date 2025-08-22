@@ -12,17 +12,22 @@ const chatSchema = new mongoose.Schema(
         type:String,
         required: true
     },
+    pgName: {
+      type: String,
+      required: true,
+    }, // Name of the PG
   },
   { timestamps: true }
 );
 chatSchema.index({ participants: 1, pgId: 1 }, { unique: true });
 
-chatSchema.statics.findOrCreate = async function (participants, pgId) {
+chatSchema.statics.findOrCreate = async function (participants, pgId, pgName) {
   const sortedParticipants = participants.sort();
   
     const chat = await this.create({
       participants: sortedParticipants,
-      pgId: pgId
+      pgId: pgId,
+      pgName: pgName,
     });
   return chat;
 };
