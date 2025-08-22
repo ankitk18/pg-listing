@@ -1,13 +1,13 @@
 "use client";
-import React from "react";
+import React, { Suspense } from "react";
 import { useState, useEffect } from "react";
 import { getUserByUserId, getUserIdByPgId } from "@/hooks/useFunc";
-import { useRouter,useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { socket } from "@/lib/socket";
 import NotLoggedIn from "@/components/NotLoggedIn";
-import WholeChatPage from "@/components/WholeChatPage"
+import WholeChatPage from "@/components/WholeChatPage";
 
-export default function ChatPage() {
+function ChatPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pgId = searchParams.get("pgId"); // Get target pg ID from URL
@@ -63,8 +63,7 @@ export default function ChatPage() {
   }, [user]);
   useEffect(() => {
     //reload page when chats changed
-    
-  },[chats]);
+  }, [chats]);
   // Handle target user changes from URL parameter
   useEffect(() => {
     if (pgId) {
@@ -91,9 +90,9 @@ export default function ChatPage() {
       router.replace("/chats");
     }
   }, [pgId, router]);
-  useEffect(()=>{
+  useEffect(() => {
     const allMessages = async () => {
-      const currentUser = user._id
+      const currentUser = user._id;
       try {
         const response = await fetch(
           `/api/chats/message?currentUser=${currentUser}&targetedUserId=${targetedUserId}&targetedPgId=${targetedPgId}`,
@@ -113,16 +112,22 @@ export default function ChatPage() {
         console.error("Error fetching messages:", err);
       }
     };
-    if(user && targetedUserId && targetedPgId) {
-      allMessages()
+    if (user && targetedUserId && targetedPgId) {
+      allMessages();
     }
-  },[user,targetedUserId,targetedPgId]);
+  }, [user, targetedUserId, targetedPgId]);
 
   return user ? (
     <div className="h-full">
-
       {chats ? (
-          <WholeChatPage chats={chats} messages={message} user={user} toSendUser={targetedUserId} setToSendUser={setTargetedUserId} pgId={targetedPgId} />
+        <WholeChatPage
+          chats={chats}
+          messages={message}
+          user={user}
+          toSendUser={targetedUserId}
+          setToSendUser={setTargetedUserId}
+          pgId={targetedPgId}
+        />
       ) : (
         <div className="flex-1 flex items-center justify-center text-[var(--text)]">
           <p className="text-lg">Select a chat to start messaging</p>
@@ -131,5 +136,19 @@ export default function ChatPage() {
     </div>
   ) : (
     <NotLoggedIn />
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center h-screen">
+          <p className="text-[var(--text)]">Loading chat...</p>
+        </div>
+      }
+    >
+      <ChatPageContent />
+    </Suspense>
   );
 }
