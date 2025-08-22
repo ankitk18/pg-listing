@@ -17,6 +17,11 @@ function ChatPageContent() {
   const [chats, setChats] = useState([]); // List of chat conversations
   const [message, setMessage] = useState([]); // Messages for current chat
   const [user, setUser] = useState(null); // Current logged-in user
+
+  // Set page title
+  useEffect(() => {
+    document.title = "Chats - GradStay";
+  }, []);
   // Initialize user on component mount
   useEffect(() => {
     if (localStorage.getItem("user")) {

@@ -1,15 +1,20 @@
 "use client";
-import { useState,useEffect } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import NotLoggedIn from "@/components/NotLoggedIn";
 
-
 export default function AddPgPage() {
   const [user, setUser] = useState(null);
+
   useEffect(() => {
     if (localStorage.getItem("user")) {
       setUser(JSON.parse(localStorage.getItem("user")));
     }
+  }, []);
+
+  // Set page title
+  useEffect(() => {
+    document.title = "Add PG - GradStay";
   }, []);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(null);
@@ -68,7 +73,7 @@ export default function AddPgPage() {
     event.preventDefault();
     setIsSubmitting(true);
     const form = new FormData();
-    if(!images || images.length === 0) {
+    if (!images || images.length === 0) {
       setError("Please upload an image.");
       setIsSubmitting(false);
       return;
@@ -92,14 +97,18 @@ export default function AddPgPage() {
     const uploadData = await uploadResponse.json();
     setFormData((prevData) => ({
       ...prevData,
-      images: uploadData.url
+      images: uploadData.url,
     }));
     const response = await fetch("/api/pg", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({...formData, userId: user._id, images: uploadData.url}),
+      body: JSON.stringify({
+        ...formData,
+        userId: user._id,
+        images: uploadData.url,
+      }),
     });
     if (response.ok) {
       const data = await response.json();
@@ -116,8 +125,8 @@ export default function AddPgPage() {
       setError(null);
       // Reset the form data
       document.querySelector("form").reset();
-    } 
-    if(!response.ok) {
+    }
+    if (!response.ok) {
       setSuccess(null);
       const errorData = await response.json();
       setError(errorData.message);
@@ -235,7 +244,7 @@ export default function AddPgPage() {
         )}
       </motion.div>
     </main>
-  ): (
+  ) : (
     <NotLoggedIn />
   );
 }

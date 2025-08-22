@@ -2,9 +2,16 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import {useLogin} from "@/hooks/useLogin";
+import { useEffect } from "react";
+import { useLogin } from "@/hooks/useLogin";
+
 export default function LoginPage() {
   const { login, error, loading } = useLogin();
+
+  // Set page title
+  useEffect(() => {
+    document.title = "Login - GradStay";
+  }, []);
   const handleLogin = async (event) => {
     event.preventDefault();
     const formData = new FormData(event.target);
@@ -57,9 +64,7 @@ export default function LoginPage() {
           </motion.button>
           {/* Error Message */}
           {error && (
-            <p className="text-red-500 text-sm text-center mt-2">
-              {error}
-            </p>
+            <p className="text-red-500 text-sm text-center mt-2">{error}</p>
           )}
         </form>
         {/* Sign Up Link */}

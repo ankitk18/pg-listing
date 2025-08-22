@@ -21,13 +21,8 @@ app.prepare().then(async () => {
   const io = new Server(server);
 
   io.on("connection", (socket) => {
-    console.log("User connected:", socket.id);
-
     socket.on("send-message", ({ msg, currentUser, targetUser, pgId }) => {
       const roomId = [currentUser, targetUser, pgId].sort().join("-");
-      console.log(
-        `Message from ${currentUser} to ${targetUser} in room ${roomId}:`
-      );
       Message.create({
         participants: [currentUser, targetUser].sort(),
         message: {
@@ -37,7 +32,6 @@ app.prepare().then(async () => {
         pgId: pgId,
       })
         .then((message) => {
-          console.log("Message saved:");
         })
         .catch((error) => {
           console.error("Error saving message:", error);
@@ -64,17 +58,13 @@ app.prepare().then(async () => {
           pgId,
           pgName
         );
-        console.log("Chat created:", chat);
         socket.emit("chat-joined", chat);
       } else {
-        console.log("Chat already exists:", findChat);
         socket.emit("chat-joined", findChat);
       }
-      console.log(`User ${currentUser} joined the room ${roomId}`);
     });
 
     socket.on("disconnect", () => {
-      console.log(`User disconnected: ${socket.id}`);
     });
   });
 
