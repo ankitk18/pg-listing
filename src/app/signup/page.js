@@ -1,12 +1,17 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSignup } from "@/hooks/useSignup";
 
 export default function SignupPage() {
   const { signup, error, loading } = useSignup();
   const [success, setSuccess] = useState(null);
+
+  // Set page title
+  useEffect(() => {
+    document.title = "Sign Up - GradStay";
+  }, []);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -21,7 +26,7 @@ export default function SignupPage() {
       }, 2000);
     }
     event.target.reset();
-  }
+  };
   return (
     <div className="min-h-full min-w-full flex items-center justify-center bg-[var(--bg)] text-[var(--text)] p-4">
       <motion.div
@@ -91,16 +96,10 @@ export default function SignupPage() {
             🚀 Create Account
           </motion.button>
           {/* Error Message */}
-          {error && (
-            <p className="text-red-500 text-center mt-4">
-              {error}
-            </p>
-          )}
+          {error && <p className="text-red-500 text-center mt-4">{error}</p>}
           {/* Success Message */}
           {success && (
-            <p className="text-green-500 text-center mt-4">
-              {success}
-            </p>
+            <p className="text-green-500 text-center mt-4">{success}</p>
           )}
         </form>
       </motion.div>

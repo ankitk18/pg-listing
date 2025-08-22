@@ -9,6 +9,11 @@ import { getPgByPgId, getUserIdByPgId } from "@/hooks/useFunc";
 export default function Home() {
   const [pgs, setPgs] = useState(null);
   const [showPopup, setShowPopup] = useState(false);
+
+  // Set page title
+  useEffect(() => {
+    document.title = "GradStay - Find Your Perfect PG";
+  }, []);
   const handleClick = async (e, pgId) => {
     // Always prevent default navigation first
     e.preventDefault();
@@ -19,7 +24,7 @@ export default function Home() {
 
     const currentUser = JSON.parse(localStorage.getItem("user"));
     const { user } = await getUserIdByPgId(pgId);
-    const {pg} = await getPgByPgId(pgId);
+    const { pg } = await getPgByPgId(pgId);
     //popup if user and currentUser are same
     if (user._id === currentUser._id) {
       setShowPopup(true);

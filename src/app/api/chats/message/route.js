@@ -8,11 +8,6 @@ export async function GET(request) {
     const currentUser = searchParams.get("currentUser");
     const targetedUserId = searchParams.get("targetedUserId");
     const targetedPgId = searchParams.get("targetedPgId");
-    console.log("Fetching messagescfewdfwef for:", {
-      currentUser,
-      targetedUserId,
-      targetedPgId,
-    });
     const messages = await Message.find({
       participants: { $all: [currentUser, targetedUserId].sort() },
       pgId: targetedPgId,
