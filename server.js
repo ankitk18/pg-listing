@@ -1,4 +1,4 @@
-import { createServer, get } from "http";
+import { createServer } from "http";
 import next from "next";
 import { Server } from "socket.io";
 const app = next({ dev: process.env.NODE_ENV !== "production" });
@@ -67,8 +67,8 @@ app.prepare().then(async () => {
     socket.on("disconnect", () => {
     });
   });
-
-  server.listen(3000, "0.0.0.0", () => {
+  const PORT = process.env.PORT || 3000
+  server.listen(PORT, "0.0.0.0", () => {
     console.log("Server running on http://localhost:3000");
   });
 });
