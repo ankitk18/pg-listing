@@ -7,7 +7,7 @@
     "dev": "kill-port 3000 && next dev",
     "dev:socket": "kill-port 3000 && tsc-alias -p jsconfig.json && node server.js",
     "build": "next build",
-    "start": "next start",
+    "start": "node server.js",
     "lint": "next lint"
   },
   "dependencies": {
