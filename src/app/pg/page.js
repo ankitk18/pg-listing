@@ -8,6 +8,9 @@ import { socket } from "@/lib/socket";
 import { getPgByPgId, getUserIdByPgId } from "@/hooks/useFunc";
 import NotLoggedIn from "@/components/NotLoggedIn";
 
+// Force dynamic rendering - prevents prerender errors
+export const dynamic = "force-dynamic";
+
 function PgSuggestContent() {
   const searchParams = useSearchParams();
   const collegeName = searchParams.get("collegeName");
