@@ -14,7 +14,7 @@ app.prepare().then(async () => {
   });
 
   connectToDatabase()
-    .then(() => {})
+    .then(() => {console.log("Database")})
     .catch((err) => {
       console.error("MongoDB connection error:", err);
     });
@@ -32,6 +32,7 @@ app.prepare().then(async () => {
         pgId: pgId,
       })
         .then((message) => {
+          console.log("Message")
         })
         .catch((error) => {
           console.error("Error saving message:", error);
