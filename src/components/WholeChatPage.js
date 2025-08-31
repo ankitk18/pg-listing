@@ -72,6 +72,7 @@ export default function WholeChatPage({
     }
   };
   const handleClick = (chat) => {
+    setIsSidebarOpen(false);
     setCurrChat(chat);
     const targetedUserId = chat.participants.find(
       (user) => user !== JSON.parse(localStorage.getItem("user"))._id
@@ -90,11 +91,11 @@ export default function WholeChatPage({
     });
   };
   return (
-    <div className="fixed inset-0 top-16 bg-[var(--bg)] text-[var(--text)] flex overflow-hidden">
+    <div className="fixed inset-0 top-16 bg-[var(--bg-primary)] text-[var(--text-primary)] flex overflow-hidden">
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-        className="md:hidden fixed top-20 right-0 mr-3 z-50 bg-[var(--highlight)] text-[var(--bg)] p-2 rounded-lg shadow-lg"
+        className="md:hidden fixed top-20 right-0 mr-3 z-50 bg-[var(--accent-highlight)] text-[var(--bg-primary)] p-2 rounded-lg shadow-lg"
       >
         <svg
           className="w-5 h-5"
@@ -120,15 +121,15 @@ export default function WholeChatPage({
             animate={{ x: 0 }}
             exit={{ x: -300 }}
             transition={{ duration: 0.3 }}
-            className="flex flex-col w-64 md:w-72 lg:w-80 border-r border-[var(--border)] bg-[var(--dropdown)] p-4 h-full absolute md:relative z-40"
+            className="flex flex-col w-64 md:w-72 lg:w-80 border-r border-[var(--card-border)] bg-[var(--card-bg)] p-4 h-full absolute md:relative z-40"
           >
             <div className="flex items-center justify-between mb-4 flex-shrink-0">
-              <h2 className="text-lg md:text-xl font-bold text-[var(--highlight)]">
+              <h2 className="text-lg md:text-xl font-bold text-[var(--accent-highlight)]">
                 Chats
               </h2>
               <button
                 onClick={() => setIsSidebarOpen(false)}
-                className="md:hidden text-[var(--text)] hover:text-[var(--highlight)]"
+                className="md:hidden text-[var(--text-primary)] hover:text-[var(--accent-highlight)]"
               >
                 <svg
                   className="w-5 h-5"
@@ -156,10 +157,10 @@ export default function WholeChatPage({
               {chats.length != 0 ? (
                 <motion.div layout className="space-y-2">
                   {chats.map((chat, index) => {
-                    const isActive = currChat?.pgId === chat.pgId;
+                    const isActive = currChat?._id === chat._id;
                     return (
                       <motion.div
-                        key={chat.pgId}
+                        key={chat._id}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.1 }}
@@ -175,12 +176,12 @@ export default function WholeChatPage({
                           }}
                           className={`p-3 rounded-lg font-medium transition-all block ${
                             isActive
-                              ? "bg-[var(--highlight)] text-[var(--bg)] cursor-default shadow-lg"
-                              : "cursor-pointer hover:bg-[var(--hover)] hover:text-[var(--nav-text)] hover:shadow-md"
+                              ? "bg-[var(--card-hover)] text-[var(--navbar-text)] cursor-default shadow-lg"
+                              : "cursor-pointer hover:bg-[var(--card-hover)] hover:text-[var(--navbar-text)] hover:shadow-md"
                           }`}
                         >
                           <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-[var(--border)] rounded-full flex items-center justify-center">
+                            <div className="w-10 h-10 bg-[var(--card-border)] rounded-full flex items-center justify-center">
                               <span className="text-sm font-bold">
                                 {chat.pgName?.charAt(0)?.toUpperCase() || "P"}
                               </span>
@@ -201,7 +202,7 @@ export default function WholeChatPage({
                 </motion.div>
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-[var(--text)] opacity-70">
+                  <p className="text-[var(--text-primary)] opacity-70">
                     No chats available
                   </p>
                 </div>
@@ -226,19 +227,19 @@ export default function WholeChatPage({
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex-shrink-0 p-4 md:p-6 pb-2 border-b border-[var(--border)] bg-[var(--dropdown)]"
+              className="flex-shrink-0 p-4 md:p-6 pb-2 border-b border-[var(--card-border)] bg-[var(--card-bg)]"
             >
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-[var(--highlight)] rounded-full flex items-center justify-center">
-                  <span className="text-[var(--bg)] font-bold">
+                <div className="w-10 h-10 bg-[var(--btn-cyan)] rounded-full flex items-center justify-center">
+                  <span className="text-[var(--bg-primary)] font-bold">
                     {user?.name?.charAt(0)?.toUpperCase() || "U"}
                   </span>
                 </div>
                 <div>
-                  <h2 className="text-lg md:text-xl font-bold text-[var(--highlight)]">
+                  <h2 className="text-lg md:text-xl font-bold text-[var(--btn-cyan)]">
                     {currChat?.pgName || "Chat"}
                   </h2>
-                  <p className="text-sm text-[var(--text)] opacity-70">
+                  <p className="text-sm text-[var(--text-secondary)] opacity-70">
                     {user?.name}'s conversation
                   </p>
                 </div>
@@ -257,7 +258,7 @@ export default function WholeChatPage({
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="h-full flex flex-col items-center justify-center text-[var(--text)]"
+                  className="h-full flex flex-col items-center justify-center text-[var(--text-primary)]"
                 >
                   <div className="text-6xl mb-4">💬</div>
                   <p className="text-lg md:text-xl font-medium">
@@ -285,8 +286,8 @@ export default function WholeChatPage({
                           <div
                             className={`max-w-xs md:max-w-md lg:max-w-lg p-3 rounded-2xl shadow-lg ${
                               isOwn
-                                ? "bg-[var(--highlight)] text-[var(--bg)] rounded-br-md"
-                                : "bg-[var(--dropdown)] text-[var(--text)] rounded-bl-md border border-[var(--border)]"
+                                ? "bg-[var(--btn-cyan)] text-[var(--bg-primary)] rounded-br-md"
+                                : "bg-[var(--card-bg)] text-[var(--text-primary)] rounded-bl-md border border-[var(--card-border)]"
                             }`}
                           >
                             <p className="text-sm md:text-base leading-relaxed">
@@ -295,8 +296,8 @@ export default function WholeChatPage({
                             <p
                               className={`text-xs mt-1 ${
                                 isOwn
-                                  ? "text-[var(--bg)] opacity-70"
-                                  : "text-[var(--text)] opacity-50"
+                                  ? "text-[var(--bg-primary)] opacity-70"
+                                  : "text-[var(--text-secondary)] opacity-50"
                               }`}
                             >
                               {new Date(
@@ -320,7 +321,7 @@ export default function WholeChatPage({
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex-shrink-0 bg-[var(--dropdown)] p-4 md:p-6 pt-4 border-t border-[var(--border)]"
+              className="flex-shrink-0 bg-[var(--card-bg)] p-4 md:p-6 pt-4 border-t border-[var(--card-border)]"
             >
               <form
                 onSubmit={handleSubmit}
@@ -331,14 +332,14 @@ export default function WholeChatPage({
                     ref={inputRef}
                     type="text"
                     placeholder="Type a message..."
-                    className="w-full p-3 md:p-4 pr-12 rounded-2xl border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] focus:ring-2 focus:ring-[var(--highlight)] focus:outline-none resize-none text-sm md:text-base"
+                    className="w-full p-3 md:p-4 pr-12 rounded-2xl border border-[var(--card-border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--btn-cyan)] focus:outline-none resize-none text-sm md:text-base"
                   />
                 </div>
                 <motion.button
                   type="submit"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="bg-[var(--highlight)] text-[var(--bg)] p-3 md:p-4 rounded-2xl font-bold shadow-lg hover:opacity-90 transition-all"
+                  className="bg-[var(--btn-cyan)] text-[var(--bg-primary)] p-3 md:p-4 rounded-2xl font-bold shadow-lg hover:opacity-90 transition-all"
                 >
                   <svg
                     className="w-5 h-5"
@@ -361,10 +362,10 @@ export default function WholeChatPage({
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="flex-1 flex flex-col items-center justify-center text-[var(--text)] p-8"
+            className="flex-1 flex flex-col items-center justify-center text-[var(--text-primary)] p-8"
           >
             <div className="text-8xl mb-6">💬</div>
-            <h3 className="text-xl md:text-2xl font-bold text-[var(--highlight)] mb-2">
+            <h3 className="text-xl md:text-2xl font-bold text-[var(--btn-cyan)] mb-2">
               Welcome to GradStay Chat
             </h3>
             <p className="text-base md:text-lg opacity-70 text-center max-w-md">
@@ -372,7 +373,7 @@ export default function WholeChatPage({
             </p>
             <button
               onClick={() => setIsSidebarOpen(true)}
-              className="md:hidden mt-6 bg-[var(--highlight)] text-[var(--bg)] px-6 py-3 rounded-lg font-medium"
+              className="md:hidden mt-6 bg-[var(--btn-cyan)] text-[var(--bg-primary)] px-6 py-3 rounded-lg font-medium"
             >
               View Chats
             </button>

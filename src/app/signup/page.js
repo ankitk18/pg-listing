@@ -3,10 +3,12 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useSignup } from "@/hooks/useSignup";
+import validator from "validator";
 
 export default function SignupPage() {
   const { signup, error, loading } = useSignup();
   const [success, setSuccess] = useState(null);
+  const [passwordStrength, setPasswordStrength] = useState("");
 
   // Set page title
   useEffect(() => {
@@ -18,13 +20,24 @@ export default function SignupPage() {
     const formData = new FormData(event.target);
     const data = Object.fromEntries(formData.entries());
     const { name, email, password, phone, profilePicture } = data;
-    await signup(name, email, password, phone, profilePicture);
-    if (!error) {
-      setSuccess("Account created successfully!");
+    if (!validator.isEmail(email)) {
+      setSuccess(null);
+      return alert("Please enter a valid email address.");
+    }
+    if (!validator.isStrongPassword(password)) {
+      setSuccess(null);
+      setPasswordStrength("Password is not strong enough. It should be at least 8 characters long and include uppercase letters, lowercase letters, numbers, and symbols.");
+      return;
+    }
+    signup(name, email, password, phone, profilePicture)
+      .then(() => {
+        if (!error){
+      setSuccess("Account created successfully!")
       setTimeout(() => {
         window.location.href = "/";
-      }, 2000);
-    }
+      }, 500);}
+      })
+      .catch(() => setSuccess(null));
     event.target.reset();
   };
   return (
@@ -97,6 +110,10 @@ export default function SignupPage() {
           </motion.button>
           {/* Error Message */}
           {error && <p className="text-red-500 text-center mt-4">{error}</p>}
+          {/* Password Strength Message */}
+          {passwordStrength && (
+            <p className="text-yellow-500 text-center mt-4">{passwordStrength}</p>
+          )}
           {/* Success Message */}
           {success && (
             <p className="text-green-500 text-center mt-4">{success}</p>

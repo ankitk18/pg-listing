@@ -4,6 +4,47 @@ import { motion } from "framer-motion";
 import NotLoggedIn from "@/components/NotLoggedIn";
 
 export default function AddPgPage() {
+  const statesAndUTsOfIndia = [
+    // States
+    "Andhra Pradesh",
+    "Arunachal Pradesh",
+    "Assam",
+    "Bihar",
+    "Chhattisgarh",
+    "Goa",
+    "Gujarat",
+    "Haryana",
+    "Himachal Pradesh",
+    "Jharkhand",
+    "Karnataka",
+    "Kerala",
+    "Madhya Pradesh",
+    "Maharashtra",
+    "Manipur",
+    "Meghalaya",
+    "Mizoram",
+    "Nagaland",
+    "Odisha",
+    "Punjab",
+    "Rajasthan",
+    "Sikkim",
+    "Tamil Nadu",
+    "Telangana",
+    "Tripura",
+    "Uttar Pradesh",
+    "Uttarakhand",
+    "West Bengal",
+
+    // Union Territories
+    "Andaman and Nicobar Islands",
+    "Chandigarh",
+    "Dadra and Nagar Haveli and Daman and Diu",
+    "Delhi",
+    "Jammu and Kashmir",
+    "Ladakh",
+    "Lakshadweep",
+    "Puducherry",
+  ].sort();
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -17,7 +58,11 @@ export default function AddPgPage() {
     document.title = "Add PG - GradStay";
   }, []);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedState, setSelectedState] = useState("");
   const [success, setSuccess] = useState(null);
+  const [debounceCollegeName, setDebounceCollegeName] = useState("");
+  const [selectedCollege, setSelectedCollege] = useState("");
+  const [resultColleges, setResultColleges] = useState([]);
   const [images, setImages] = useState("");
   const [formData, setFormData] = useState({
     name: "",
@@ -132,8 +177,38 @@ export default function AddPgPage() {
       setError(errorData.message);
     }
   };
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebounceCollegeName(selectedCollege);
+    }, 500);
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [selectedCollege]);
+  useEffect(() => {
+    const fetchColleges = async () => {
+      if (debounceCollegeName.trim() === "" || selectedState.trim() === "") {
+        setResultColleges([]);
+        return;
+      }
+      try {
+        const response = await fetch(
+          `/api/college?collegeName=${debounceCollegeName}&state=${selectedState}`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setResultColleges(data);
+        } else {
+          console.error("Error fetching colleges");
+        }
+      } catch (error) {
+        console.error("Error fetching colleges:", error);
+      }
+    };
+    fetchColleges();
+  }, [debounceCollegeName, selectedState]);
   return user ? (
-    <main className="min-h-full bg-gradient-to-br from-[#1a2238] via-[#232f4b] to-[#0f172a] text-[var(--text)] flex items-center justify-center px-4 py-12">
+    <main className="min-h-full bg-gradient-to-br from-[var(--bg)] via-[var(--dropdown)] to-[var(--bg)] text-[var(--text)] flex items-center justify-center px-4 py-12">
       <motion.div
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
@@ -145,40 +220,81 @@ export default function AddPgPage() {
         </h1>
 
         <form className="grid gap-6">
-          {[
-            { name: "name", type: "text", placeholder: "🏡 PG Name" },
-            {
-              name: "nearByCollege",
-              type: "text",
-              placeholder: "🎓 Nearby College",
-            },
-            { name: "address", type: "text", placeholder: "📍 Full Address" },
-            {
-              name: "rent",
-              type: "number",
-              placeholder: "💰 Monthly Rent (₹)",
-            },
-          ].map(({ name, type, placeholder }) => (
-            <input
-              key={name}
-              name={name}
-              type={type}
-              placeholder={placeholder}
-              onChange={(e) => {
-                if (name === "name")
-                  setFormData({ ...formData, name: e.target.value });
-                if (name === "nearByCollege")
-                  setFormData({ ...formData, nearByCollege: e.target.value });
-                if (name === "address")
-                  setFormData({ ...formData, address: e.target.value });
-                if (name === "rent")
-                  setFormData({ ...formData, rent: e.target.value });
-              }}
-              required
-              className="w-full p-3 rounded-xl bg-[var(--bg)] text-[var(--text)] border border-[var(--border)] focus:ring-2 focus:ring-[var(--highlight)] focus:outline-none placeholder:text-gray-400 transition"
-            />
-          ))}
+          <input
+            type="text"
+            name="name"
+            placeholder="🏷️ PG Name"
+            required
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            className="w-full p-3 rounded-xl bg-[var(--bg)] text-[var(--text)] border border-[var(--border)] focus:ring-2 focus:ring-[var(--highlight)] focus:outline-none placeholder:text-gray-400"
+          />
+          <select
+            name="state"
+            required
+            onChange={(e) => { setSelectedState(e.target.value);}}
+            value={selectedState}
+            className="w-full p-3 rounded-xl bg-[var(--bg)] text-[var(--text)] border border-[var(--border)] focus:ring-2 focus:ring-[var(--highlight)] focus:outline-none placeholder:text-gray-400"
+          >
+            <option value="" disabled>
+              🗺️ Select State
+            </option>
+            {statesAndUTsOfIndia.map((state) => (
+              <option key={state} value={state}>
+                {state}
+              </option>
+            ))}
+          </select>
+          <input
+            type="text"
+            name="nearByCollege"
+            placeholder="🎓 Near By College"
+            disabled={!selectedState}
+            required
+            value={selectedCollege}
+            onChange={(e) =>
+              setSelectedCollege(e.target.value)
+            }
+            className="w-full p-3 rounded-xl bg-[var(--bg)] text-[var(--text)] border border-[var(--border)] focus:ring-2 focus:ring-[var(--highlight)] focus:outline-none placeholder:text-gray-400"
+          />
+          {resultColleges.length > 0 && (
+            <ul className="border border-gray-300 rounded-md p-4 w-full max-h-60 overflow-y-auto bg-[var(--bg)] text-[var(--text)] mb-4">
+              {resultColleges.map((college) => (
+                <li
+                  key={college._id}
+                  className="mb-2 cursor-pointer hover:text-[var(--highlight)]"
+                  onClick={() => {
+                    setFormData({
+                      ...formData,
+                      nearByCollege: college.name,
+                    });
+                    setSelectedCollege(college.name);
+                    setResultColleges([]);
+                  }}
+                >
+                  {college.name} - {college.city}, {college.state}
+                </li>
+              ))}
+            </ul>
+          )}
+          <input
+            type="text"
+            name="address"
+            placeholder="📍 Address"
+            required
+            onChange={(e) =>
+              setFormData({ ...formData, address: e.target.value })
+            }
+            className="w-full p-3 rounded-xl bg-[var(--bg)] text-[var(--text)] border border-[var(--border)] focus:ring-2 focus:ring-[var(--highlight)] focus:outline-none placeholder:text-gray-400"
+          />
 
+          <input
+            type="number"
+            name="rent"
+            placeholder="💰 Monthly Rent (in INR)"
+            required
+            onChange={(e) => setFormData({ ...formData, rent: e.target.value })}
+            className="w-full p-3 rounded-xl bg-[var(--bg)] text-[var(--text)] border border-[var(--border)] focus:ring-2 focus:ring-[var(--highlight)] focus:outline-none placeholder:text-gray-400"
+          />
           <textarea
             name="description"
             placeholder="📝 Description"
