@@ -19,7 +19,6 @@ const chatSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-chatSchema.index({ participants: 1, pgId: 1 }, { unique: true });
 
 chatSchema.statics.findOrCreate = async function (participants, pgId, pgName) {
   const sortedParticipants = participants.sort();

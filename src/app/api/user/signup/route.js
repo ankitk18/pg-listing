@@ -8,6 +8,7 @@ export async function POST(request) {
     const user = await User.signup(name, email, password, phone, profileUrl);
     return Response.json({ user }, { status: 201 });
   } catch (error) {
-    return Response.json({ message: error.message }, { status: 400 });
+    //throw error message
+    return Response.json({ error: error.message }, { status: 400 });
   }
 }

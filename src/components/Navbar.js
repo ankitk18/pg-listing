@@ -32,9 +32,9 @@ function ProfileMenu(user) {
     <div className="relative profile-menu">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 rounded-full border border-[var(--border)] px-3 py-1 bg-[var(--hover)] text-[var(--text)]"
+        className="flex items-center gap-2 rounded-full border border-[var(--navbar-border)] px-3 py-1 text-[var(--navbar-text)]"
       >
-        <span className="h-8 w-8 rounded-full bg-[var(--highlight)] flex items-center justify-center text-sm font-bold text-[var(--bg)]">
+        <span className="h-8 w-8 rounded-full bg-[var(--bg-accent)] flex items-center justify-center text-sm font-bold text-[var(--navbar-text)]">
           {user?.user?.charAt(0).toUpperCase()}
         </span>
         <motion.span
@@ -54,7 +54,7 @@ function ProfileMenu(user) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="absolute right-0 z-10 mt-4 w-40 rounded-md border border-[var(--border)] bg-[var(--dropdown)] shadow-lg text-[var(--text)] overflow-hidden"
+            className="absolute right-0 z-10 mt-4 w-40 rounded-md border border-[var(--card-border)] bg-[var(--navbar-bg)] shadow-lg text-[var(--text-primary)] overflow-hidden"
           >
             {profileMenuItems.map((label) => (
               <motion.li
@@ -62,8 +62,8 @@ function ProfileMenu(user) {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setOpen(false)}
                 onMouseDown={label === "Sign Out" ? handleSignOut : null}
-                className={`px-4 py-2 text-sm font-bold cursor-pointer hover:bg-[var(--hover)] transition ${
-                  label === "Sign Out" ? "text-red-500" : ""
+                className={`px-4 py-2 text-sm font-bold cursor-pointer hover:bg-[var(--navbar-hover)] transition ${
+                  label === "Sign Out" ? "text-[var(--accent-error)]" : ""
                 }`}
               >
                 {label}
@@ -91,7 +91,7 @@ function AnimatedNavItem({ label, href }) {
     >
       <Link
         href={href}
-        className="px-4 py-2 rounded-full font-bold text-[var(--text)] hover:bg-[var(--hover)] shadow-md focus:outline-none focus:ring-2 focus:ring-[var(--highlight)]"
+        className="px-4 py-2 rounded-full font-bold text-[var(--navbar-text)] bg-[var(--bg-accent)] hover:bg-[var(--navbar-hover)] shadow-md focus:outline-none focus:ring-2 focus:ring-[var(--accent-highlight)]"
       >
         {label}
       </Link>
@@ -114,14 +114,22 @@ function NavList() {
 export default function ComplexNavbar() {
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [user, setUser] = useState(null);
+  // outside click handler to close mobile nav
   useEffect(() => {
-    if(localStorage.getItem("user")) {
+    if (localStorage.getItem("user")) {
       setUser(JSON.parse(localStorage.getItem("user")));
     }
+    const handleClickOutside = (event) => {
+      if (!event.target.closest(".mobNav")) {
+        setIsNavOpen(false);
+      }
+    };
+    window.addEventListener("click", handleClickOutside);
+    return () => window.removeEventListener("click", handleClickOutside);
   }, []);
 
   return (
-    <nav className="relative z-50 max-w-screen mx-auto px-4 py-3 flex items-center justify-between bg-[var(--primary)] text-[var(--text)]">
+    <nav className="relative z-50 max-w-screen mx-auto px-4 py-3 flex items-center justify-between bg-[var(--navbar-bg)] text-[var(--navbar-text)]">
       {/* LEFT: Logo */}
       <Link href="/" className="flex items-center gap-2">
         <Image
@@ -131,7 +139,7 @@ export default function ComplexNavbar() {
           height={40}
           className="rounded-full"
         />
-        <span className="text-2xl font-semibold text-[var(--nav-text)]">
+        <span className="text-2xl font-semibold text-[var(--navbar-text)]">
           GRADSTAY
         </span>
       </Link>
@@ -140,11 +148,11 @@ export default function ComplexNavbar() {
         <NavList />
       </div>
       {/* RIGHT: Profile and Menu */}
-      <div className="flex items-center gap-4">
+      <div className="mobNav flex items-center gap-4">
         {!user ? (
           <Link href="/login">
             <motion.button
-              className="text-sm font-bold hover:underline bg-[var(--hover)] px-2 py-1 rounded text-[var(--text)]"
+              className="text-sm font-bold hover:underline bg-[var(--navbar-hover)] px-2 py-1 rounded text-[var(--navbar-text)]"
               type="button"
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
@@ -153,12 +161,12 @@ export default function ComplexNavbar() {
             </motion.button>
           </Link>
         ) : (
-          <ProfileMenu user={user.name}/>
+          <ProfileMenu user={user.name} />
         )}
         {user && (
           <button
             onClick={() => setIsNavOpen((prev) => !prev)}
-            className="lg:hidden px-2 py-1 rounded border border-[var(--border)] text-xl font-bold bg-[var(--hover)]"
+            className="lg:hidden px-2 py-1 rounded border border-[var(--navbar-border)] text-xl font-bold bg-[var(--navbar-hover)]"
           >
             {isNavOpen ? "Close" : "Menu"}
           </button>
@@ -167,7 +175,7 @@ export default function ComplexNavbar() {
 
       {/* MOBILE NAV */}
       {isNavOpen && (
-        <div className="absolute flex items-center justify-center top-full right-4 mt-2 w-auto rounded-md border border-[var(--border)] bg-[var(--dropdown)] shadow-lg p-3 lg:hidden">
+        <div className="absolute flex items-center justify-center top-full right-4 mt-2 w-auto rounded-md border border-[var(--card-border)] bg-[var(--card-bg)] shadow-lg p-3 lg:hidden">
           <NavList />
         </div>
       )}

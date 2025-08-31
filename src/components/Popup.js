@@ -22,9 +22,9 @@ export default function Popup({ isOpen, onClose, title, message }) {
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
           transition={{ duration: 0.2 }}
           style={{
-            background: "#232f4b", // --dropdown
-            color: "#ffffff", // --text
-            border: "2px solid #b3c2ff", // --border
+            background: "var(--card-bg)",
+            color: "var(--text-primary)",
+            border: "2px solid var(--card-border)",
           }}
           className="relative max-w-md w-full mx-4 p-6 rounded-lg shadow-xl"
         >
@@ -32,7 +32,7 @@ export default function Popup({ isOpen, onClose, title, message }) {
           <div className="flex items-center mb-4">
             <div
               className="w-8 h-8 rounded-full flex items-center justify-center mr-3"
-              style={{ color: "#f9e88d" }} // --highlight
+              style={{ color: "var(--btn-orange)" }}
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path
@@ -45,7 +45,7 @@ export default function Popup({ isOpen, onClose, title, message }) {
             {title && (
               <h3
                 className="text-lg font-semibold"
-                style={{ color: "#ffffff" }}
+                style={{ color: "var(--text-primary)" }}
               >
                 {title}
               </h3>
@@ -55,7 +55,7 @@ export default function Popup({ isOpen, onClose, title, message }) {
           {/* Message */}
           <p
             className="mb-6 text-sm leading-relaxed"
-            style={{ color: "#ffffff" }}
+            style={{ color: "var(--text-primary)" }}
           >
             {message}
           </p>
@@ -67,8 +67,8 @@ export default function Popup({ isOpen, onClose, title, message }) {
               whileTap={{ scale: 0.95 }}
               onClick={onClose}
               style={{
-                background: "#f9e88d", // --highlight
-                color: "#1c263b", // --bg
+                background: "var(--btn-cyan)",
+                color: "var(--bg-primary)",
               }}
               className="px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity"
             >

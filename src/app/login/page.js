@@ -24,14 +24,14 @@ export default function LoginPage() {
     event.target.reset();
   };
   return (
-    <div className="flex justify-center bg-[var(--bg)] text-[var(--text)] p-4 mt-20">
+    <div className="flex justify-center bg-[var(--bg-primary)] text-[var(--text-primary)] p-4 mt-20">
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
         className="max-w-3xl bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl shadow-2xl p-8"
       >
-        <h1 className="text-center text-4xl font-extrabold text-[var(--highlight)] mb-8 drop-shadow">
+        <h1 className="text-center text-4xl font-extrabold text-[var(--btn-cyan)] mb-8 drop-shadow">
           📝 Log In
         </h1>
 
@@ -41,7 +41,7 @@ export default function LoginPage() {
             type="email"
             name="email"
             placeholder="📧 Email Address"
-            className="w-full p-3 rounded-xl bg-[var(--bg)] text-[var(--text)] border border-[var(--border)] placeholder:text-gray-400"
+            className="w-full p-3 rounded-xl bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--card-border)] placeholder:text-[var(--text-muted)]"
             required
           />
 
@@ -50,7 +50,7 @@ export default function LoginPage() {
             type="password"
             name="password"
             placeholder="🔐 Password"
-            className="w-full p-3 rounded-xl bg-[var(--bg)] text-[var(--text)] border border-[var(--border)] placeholder:text-gray-400"
+            className="w-full p-3 rounded-xl bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--card-border)] placeholder:text-[var(--text-muted)]"
             required
           />
           <motion.button
@@ -58,7 +58,7 @@ export default function LoginPage() {
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             disabled={loading}
-            className="w-full bg-[var(--highlight)] text-[var(--bg)] py-3 rounded-xl font-bold shadow-lg hover:opacity-90 transition"
+            className="w-full bg-[var(--btn-cyan)] text-[var(--bg-primary)] py-3 rounded-xl font-bold shadow-lg hover:opacity-90 transition"
           >
             🚀 Log In
           </motion.button>

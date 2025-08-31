@@ -89,12 +89,12 @@ function ChatPageContent() {
       setTargetedUser(null);
     }
   }, [pgId]);
-  useEffect(() => {
-    if (pgId) {
-      // remove query param from URL after refresh
-      router.replace("/chats");
-    }
-  }, [pgId, router]);
+  // useEffect(() => {
+  //   if (pgId) {
+  //     // remove query param from URL after refresh
+  //     router.replace("/chats");
+  //   }
+  // }, [pgId, router]);
   useEffect(() => {
     const allMessages = async () => {
       const currentUser = user._id;
