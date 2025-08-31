@@ -1,6 +1,6 @@
 "use client";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import PgCard from "@/components/PgCard";
 import Popup from "@/components/Popup";
 import Link from "next/link";
@@ -8,7 +8,7 @@ import { socket } from "@/lib/socket";
 import { getPgByPgId, getUserIdByPgId } from "@/hooks/useFunc";
 import NotLoggedIn from "@/components/NotLoggedIn";
 
-export default function PgSuggest() {
+function PgSuggestContent() {
   const searchParams = useSearchParams();
   const collegeName = searchParams.get("collegeName");
   const [pgs, setPgs] = useState([]);
@@ -97,5 +97,19 @@ export default function PgSuggest() {
         message="You cannot chat with yourself. Please select a different PG to start a conversation."
       />
     </>
+  );
+}
+
+export default function PgSuggest() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center h-screen">
+          <p className="text-gray-500">Loading...</p>
+        </div>
+      }
+    >
+      <PgSuggestContent />
+    </Suspense>
   );
 }
