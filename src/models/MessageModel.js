@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 const messageSchema = new mongoose.Schema(
-    {
+  {
     participants: [
       {
         type: String,
@@ -9,25 +9,31 @@ const messageSchema = new mongoose.Schema(
       },
     ],
     message: {
-        senderId: {
-          type: String,
-          required: true,
-        },
-        message: {
-          type: String,
-          required: true,
-        },
-        timeStamp: {
-          type: Date,
-          default: Date.now,
-        },
+      senderId: {
+        type: String,
+        required: true,
+      },
+      message: {
+        type: String,
+        required: true,
+      },
+      timeStamp: {
+        type: Date,
+        default: Date.now,
+      },
     },
     pgId: {
       type: String,
       required: true,
     },
+
+    readBy: {
+      type: [String], // array of userIds
+      default: [],
+    },
   },
   { timestamps: true }
 );
 
-export default mongoose.models.Message || mongoose.model("Message", messageSchema);
+export default mongoose.models.Message ||
+  mongoose.model("Message", messageSchema);

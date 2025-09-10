@@ -8,18 +8,43 @@ import validator from "validator";
 export default function SignupPage() {
   const { signup, error, loading } = useSignup();
   const [success, setSuccess] = useState(null);
+  const [profilePicture, setProfilePicture] = useState(null);
   const [passwordStrength, setPasswordStrength] = useState("");
 
   // Set page title
   useEffect(() => {
     document.title = "Sign Up - GradStay";
   }, []);
-
+  const handleChange = (e) => {
+    setProfilePicture(e.target.files[0]);
+  };
   const handleSubmit = async (event) => {
     event.preventDefault();
     const formData = new FormData(event.target);
     const data = Object.fromEntries(formData.entries());
     const { name, email, password, phone, profilePicture } = data;
+    const form = new FormData();
+    if(profilePicture.length > 0){
+      alert("Profile picture upload is currently not supported. Please try again later.");
+      return;
+     }
+    if(profilePicture){
+     form.append("file", profilePicture);
+     const uploadResponse = await fetch("/api/uploadImage", {
+       method: "POST",
+       body: form,
+     });
+     if (!uploadResponse.ok) {
+       const errorData = await uploadResponse.json();
+       setError(errorData.message);
+       console.error("Image upload failed:", errorData.message);
+       return;
+     }
+     const uploadResult = await uploadResponse.json();
+     const profilePictureUrl = uploadResult.url;
+    }
+    const profilePictureUrl = null; // Default to null if no picture is uploaded
+    // Validate email and password strength
     if (!validator.isEmail(email)) {
       setSuccess(null);
       return alert("Please enter a valid email address.");
@@ -29,7 +54,7 @@ export default function SignupPage() {
       setPasswordStrength("Password is not strong enough. It should be at least 8 characters long and include uppercase letters, lowercase letters, numbers, and symbols.");
       return;
     }
-    signup(name, email, password, phone, profilePicture)
+    signup(name, email, password, phone, profilePictureUrl)
       .then(() => {
         if (!error){
       setSuccess("Account created successfully!")
@@ -91,9 +116,10 @@ export default function SignupPage() {
 
           {/* Profile Picture (Optional) */}
           <input
-            type="text"
+            type="File"
             name="profilePicture"
-            placeholder="🖼️ Profile Picture URL (Optional)"
+            accept="image/*"
+            onChange={handleChange}
             className="w-full p-3 rounded-xl bg-[var(--bg)] text-[var(--text)] border border-[var(--border)] placeholder:text-gray-400"
           />
 

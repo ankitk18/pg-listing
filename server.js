@@ -1,6 +1,7 @@
 import { createServer } from "http";
 import next from "next";
 import { Server } from "socket.io";
+
 const app = next({ dev: process.env.NODE_ENV !== "production" });
 const handle = app.getRequestHandler();
 
@@ -9,66 +10,127 @@ app.prepare().then(async () => {
   const { default: Message } = await import("./src/models/MessageModel.js");
   const { getPgByPgId } = await import("./src/hooks/useFunc.js");
   const { connectToDatabase } = await import("./src/lib/db.js");
+
   const server = createServer((req, res) => {
     handle(req, res);
   });
 
   connectToDatabase()
-    .then(() => {})
+    .then(() => {
+      console.log("MongoDB connected ✅");
+    })
     .catch((err) => {
       console.error("MongoDB connection error:", err);
     });
-  const io = new Server(server);
+
+  const io = new Server(server, {
+    cors: {
+      origin: "*",
+    },
+  });
 
   io.on("connection", (socket) => {
-    socket.on("send-message", ({ msg, currentUser, targetUser, pgId }) => {
-      const roomId = [currentUser, targetUser, pgId].sort().join("-");
-      Message.create({
-        participants: [currentUser, targetUser].sort(),
-        message: {
-          senderId: currentUser,
-          message: msg,
-        },
-        pgId: pgId,
-      })
-        .then((message) => {
-        })
-        .catch((error) => {
-          console.error("Error saving message:", error);
-        });
-      io.to(roomId).emit("receive-message", {
-        message: {
-          message: msg,
-          senderId: currentUser,
-          timeStamp: new Date(),
-        },
-      });
-    });
-    socket.on("join-chat", async ({ currentUser, targetUser, pgId,pgName }) => {
-      const roomId = [currentUser, targetUser, pgId].sort().join("-");
-      socket.join(roomId);
-      const findChat = await Chat.findOne({
-        participants: { $all: [currentUser, targetUser] },
-        pgId: pgId,
-      });
-      if (!findChat) {
-        // Fetch PG details to get the name
-        const chat = await Chat.findOrCreate(
-          [currentUser, targetUser],
-          pgId,
-          pgName
+    console.log("User connected:", socket.id);
+
+    // ✅ SEND MESSAGE
+    socket.on(
+      "send-message",
+      async ({ msg, currentUser, targetUser, pgId }) => {
+        const roomId = [currentUser, targetUser, pgId].sort().join("-");
+        console.log(
+          `Message from ${currentUser} to ${targetUser} in room: ${roomId}`
         );
-        socket.emit("chat-joined", chat);
-      } else {
-        socket.emit("chat-joined", findChat);
+
+        try {
+          // 🟢 ADDED (save with readBy: [sender])
+          const newMessage = await Message.create({
+            participants: [currentUser, targetUser].sort(),
+            message: {
+              senderId: currentUser,
+              message: msg,
+            },
+            pgId,
+            readBy: [currentUser], // 🟢 sender already read their own msg
+          });
+
+          io.to(roomId).emit("receive-message", {
+            message: {
+              message: msg,
+              senderId: currentUser,
+              pgId: pgId,
+              timeStamp: new Date(),
+            },
+          });
+
+          // 🟢 ADDED (notification to other user)
+          socket.to(roomId).emit("notification", {
+            from: currentUser,
+            pgId,
+            message: msg,
+          });
+        } catch (error) {
+          console.error("Error saving message:", error);
+        }
+      }
+    );
+
+    // ✅ JOIN CHAT
+    socket.on(
+      "join-chat",
+      async ({ currentUser, targetUser, pgId, pgName }) => {
+        const roomId = [currentUser, targetUser, pgId].sort().join("-");
+        socket.join(roomId);
+        console.log(`User ${currentUser} joined room: ${roomId}`);
+
+        const findChat = await Chat.findOne({
+          participants: { $all: [currentUser, targetUser] },
+          pgId: pgId,
+        });
+
+        if (!findChat) {
+          const chat = await Chat.findOrCreate(
+            [currentUser, targetUser],
+            pgId,
+            pgName
+          );
+          socket.emit("chat-joined", chat);
+        } else {
+          socket.emit("chat-joined", findChat);
+        }
+        const unreadCount = await Message.countDocuments({
+          participants: { $all: [currentUser, targetUser] },
+          pgId,
+          readBy: { $ne: currentUser },
+        });
+
+        socket.emit("unread-count", { roomId, count: unreadCount });
+      }
+    );
+    socket.on("mark-read", async ({ currentUser, targetUser, pgId }) => {
+      try {
+        // 🟢 ADDED (update DB when user reads)
+        await Message.updateMany(
+          {
+            participants: { $all: [currentUser, targetUser] },
+            pgId,
+            readBy: { $ne: currentUser },
+          },
+          { $push: { readBy: currentUser } }
+        );
+        console.log(`Marked messages as read for ${currentUser}`);
+      } catch (err) {
+        console.error("Error marking messages as read:", err);
       }
     });
 
+    // DISCONNECT
     socket.on("disconnect", () => {
+      console.log("User disconnected:", socket.id);
     });
   });
-  const PORT = process.env.PORT || 3000
+
+  const PORT = process.env.PORT || 3000;
   server.listen(PORT, "0.0.0.0", () => {
-    console.log("Server running on http://localhost:3000");
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
   });
 });

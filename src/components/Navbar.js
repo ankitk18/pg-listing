@@ -4,10 +4,10 @@ import Link from "next/link";
 import Image from "next/image";
 import React, { useState, useEffect, use } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { getUserByUserId } from "@/hooks/useFunc";
 
 const profileMenuItems = [
   "My Profile",
-  "Edit Profile",
   "Inbox",
   "Help",
   "Sign Out",
@@ -28,6 +28,20 @@ function ProfileMenu(user) {
     localStorage.removeItem("user");
     window.location.href = "/login";
   };
+  const handeleAction = (label) => {
+    console.log(label);
+    switch(label){
+      case "Sign Out": handleSignOut();
+      break;
+      case "My Profile": window.location.href="/profile";
+      break;
+      case "Inbox": window.location.href="/chats";
+      break
+      case "Help": window.location.href="/";
+      break;
+      default: return;
+    }
+  }
   return (
     <div className="relative profile-menu">
       <button
@@ -35,7 +49,14 @@ function ProfileMenu(user) {
         className="flex items-center gap-2 rounded-full border border-[var(--navbar-border)] px-3 py-1 text-[var(--navbar-text)]"
       >
         <span className="h-8 w-8 rounded-full bg-[var(--bg-accent)] flex items-center justify-center text-sm font-bold text-[var(--navbar-text)]">
-          {user?.user?.charAt(0).toUpperCase()}
+          {user.user.profilePicture?(
+            <img
+              src={user?.user?.profilePicture}
+              alt="Profile"
+              className="h-full w-full rounded-full object-cover"
+            />
+            
+          ):(user?.user?.name.charAt(0).toUpperCase())}
         </span>
         <motion.span
           animate={{ rotate: open ? 180 : 0 }}
@@ -61,9 +82,9 @@ function ProfileMenu(user) {
                 key={label}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setOpen(false)}
-                onMouseDown={label === "Sign Out" ? handleSignOut : null}
+                onMouseDown={() => handeleAction(label)}
                 className={`px-4 py-2 text-sm font-bold cursor-pointer hover:bg-[var(--navbar-hover)] transition ${
-                  label === "Sign Out" ? "text-[var(--accent-error)]" : ""
+                  label === "Sign Out" ? "text-red-500" : ""
                 }`}
               >
                 {label}
@@ -117,7 +138,18 @@ export default function ComplexNavbar() {
   // outside click handler to close mobile nav
   useEffect(() => {
     if (localStorage.getItem("user")) {
-      setUser(JSON.parse(localStorage.getItem("user")));
+      const parsedUser = JSON.parse(localStorage.getItem("user"));
+      const fetchUser = async (userId) => {
+        try {
+          const userData = await getUserByUserId(userId);
+          console.log(userData)
+          setUser(userData.user);
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+          setUser(null);
+        }
+      };
+      fetchUser(parsedUser._id);
     }
     const handleClickOutside = (event) => {
       if (!event.target.closest(".mobNav")) {
@@ -161,7 +193,7 @@ export default function ComplexNavbar() {
             </motion.button>
           </Link>
         ) : (
-          <ProfileMenu user={user.name} />
+          <ProfileMenu user={user} />
         )}
         {user && (
           <button
