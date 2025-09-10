@@ -17,7 +17,6 @@ app.prepare().then(async () => {
 
   connectToDatabase()
     .then(() => {
-      console.log("MongoDB connected ✅");
     })
     .catch((err) => {
       console.error("MongoDB connection error:", err);
@@ -30,17 +29,12 @@ app.prepare().then(async () => {
   });
 
   io.on("connection", (socket) => {
-    console.log("User connected:", socket.id);
 
     // ✅ SEND MESSAGE
     socket.on(
       "send-message",
       async ({ msg, currentUser, targetUser, pgId }) => {
         const roomId = [currentUser, targetUser, pgId].sort().join("-");
-        console.log(
-          `Message from ${currentUser} to ${targetUser} in room: ${roomId}`
-        );
-
         try {
           // 🟢 ADDED (save with readBy: [sender])
           const newMessage = await Message.create({
@@ -80,8 +74,6 @@ app.prepare().then(async () => {
       async ({ currentUser, targetUser, pgId, pgName }) => {
         const roomId = [currentUser, targetUser, pgId].sort().join("-");
         socket.join(roomId);
-        console.log(`User ${currentUser} joined room: ${roomId}`);
-
         const findChat = await Chat.findOne({
           participants: { $all: [currentUser, targetUser] },
           pgId: pgId,
@@ -117,7 +109,6 @@ app.prepare().then(async () => {
           },
           { $push: { readBy: currentUser } }
         );
-        console.log(`Marked messages as read for ${currentUser}`);
       } catch (err) {
         console.error("Error marking messages as read:", err);
       }
@@ -125,7 +116,6 @@ app.prepare().then(async () => {
 
     // DISCONNECT
     socket.on("disconnect", () => {
-      console.log("User disconnected:", socket.id);
     });
   });
 
