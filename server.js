@@ -17,8 +17,9 @@ app.prepare().then(async () => {
 
   connectToDatabase()
     .then(() => {
-      console.log("MongoDB connected ✅");
+      console.log("MongoDB connected ");
     })
+
     .catch((err) => {
       console.error("MongoDB connection error:", err);
     });
@@ -32,7 +33,7 @@ app.prepare().then(async () => {
   io.on("connection", (socket) => {
     console.log("User connected:", socket.id);
 
-    // ✅ SEND MESSAGE
+    // SEND MESSAGE
     socket.on(
       "send-message",
       async ({ msg, currentUser, targetUser, pgId }) => {
@@ -42,7 +43,7 @@ app.prepare().then(async () => {
         );
 
         try {
-          // 🟢 ADDED (save with readBy: [sender])
+          //  ADDED (save with readBy: [sender])
           const newMessage = await Message.create({
             participants: [currentUser, targetUser].sort(),
             message: {
@@ -50,7 +51,7 @@ app.prepare().then(async () => {
               message: msg,
             },
             pgId,
-            readBy: [currentUser], // 🟢 sender already read their own msg
+            readBy: [currentUser], //  sender already read their own msg
           });
 
           io.to(roomId).emit("receive-message", {
@@ -62,13 +63,27 @@ app.prepare().then(async () => {
             },
           });
 
-          // 🟢 ADDED (notification to other user)
+          //  ADDED (notification to other user)
           socket.to(roomId).emit("notification", {
             from: currentUser,
             pgId,
             message: msg,
           });
         } catch (error) {
+    socket.on("send-message", ({ msg, currentUser, targetUser, pgId }) => {
+      const roomId = [currentUser, targetUser, pgId].sort().join("-");
+      Message.create({
+        participants: [currentUser, targetUser].sort(),
+        message: {
+          senderId: currentUser,
+          message: msg,
+        },
+        pgId: pgId,
+      })
+        .then((message) => {
+          console.log("Message")
+        })
+        .catch((error) => {
           console.error("Error saving message:", error);
         }
       }
