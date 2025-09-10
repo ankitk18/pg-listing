@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import PgList from "@/models/PgModel";
 
@@ -19,6 +20,12 @@ export async function GET(request, { params }) {
         pg: {
           _id: pg._id,
           name: pg.name,
+          nearByCollege: pg.nearByCollege,
+          address: pg.address,
+          rent: pg.rent,
+          description: pg.description,
+          images: pg.images,
+          amenities: pg.amenities,
           userId: pg.userId,
         },
       },

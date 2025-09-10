@@ -24,10 +24,55 @@ export async function GET(request, { params }) {
         _id: user._id,
         name: user.name,
         email: user.email,
+        phone: user.phone,
+        profilePicture: user.profilePicture,
       },
     });
   } catch (error) {
     console.error("Error fetching user:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(request, { params }) {
+  try {
+    await connectToDatabase();
+    
+    const { userId } = await params;
+    if (!userId) {
+      return NextResponse.json(
+        { error: "User ID is required" },
+        { status: 400 }
+      );
+    }
+    
+    const { name, email, phone, profilePicture } = await request.json();
+    const user = await User.findById(userId);
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { name:name, email:email, phone:phone, profilePicture:profilePicture },
+      { new: true }
+    );
+    return NextResponse.json({
+      success: true,
+      message: "User updated successfully",
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        profilePicture: user.profilePicture,
+      },
+    });
+  } catch (error) {
+    console.error("Error updating user:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

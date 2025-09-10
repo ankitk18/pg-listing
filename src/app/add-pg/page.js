@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import NotLoggedIn from "@/components/NotLoggedIn";
+import Popup from "@/components/Popup";
 
 export default function AddPgPage() {
   const statesAndUTsOfIndia = [
@@ -64,6 +65,7 @@ export default function AddPgPage() {
   const [selectedCollege, setSelectedCollege] = useState("");
   const [resultColleges, setResultColleges] = useState([]);
   const [images, setImages] = useState("");
+  const [showPopup, setShowPopup] = useState(true);
   const [formData, setFormData] = useState({
     name: "",
     nearByCollege: "",
@@ -349,12 +351,15 @@ export default function AddPgPage() {
           </motion.button>
         </form>
         {success && (
-          <div className="mt-4 text-green-500 text-center">
-            <p>{success}</p>
-          </div>
+            <Popup 
+            isOpen={showPopup}
+            onClose={() => setShowPopup(false)} 
+            title="PG Listing Submitted!"
+            message="Your PG listing has been submitted and is under review. It will be live on the platform once approved. Thank you for contributing to GradStay!" />
         )}
         {error && (
           <div className="mt-4 text-red-500 text-center">
+            {setIsSubmitting(false)}
             <p>Error: {error}</p>
           </div>
         )}

@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, use } from "react";
 import { socket } from "@/lib/socket";
-import { getPgByPgId } from "@/hooks/useFunc";
+import { getPgByPgId, getUserByUserId } from "@/hooks/useFunc";
 
 export default function WholeChatPage({
   chats,
@@ -14,13 +14,21 @@ export default function WholeChatPage({
 }) {
   const [currChat, setCurrChat] = useState();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
+  const [participantNames, setParticipantNames] = useState({});
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
-
+  
   // Handle window resize for responsive sidebar
   useEffect(() => {
+    const getPG = async (pgId) => {
+      const { pg } = await getPgByPgId(pgId);
+      // change name key to pgName
+      const pgWithPgName = { ...pg, pgName: pg.name };
+      
+      setCurrChat(pgWithPgName)
+    };
+    if(pgId) getPG(pgId);
     const handleResize = () => {
       setIsDesktop(window.innerWidth >= 768);
     };
@@ -43,6 +51,56 @@ export default function WholeChatPage({
       inputRef.current.focus();
     }
   }, [toSendUser]);
+
+  // Function to fetch user name by ID
+  const getUserName = async (userId) => {
+    if (participantNames[userId]) {
+      return participantNames[userId];
+    }
+
+    try {
+      const data = await getUserByUserId(userId);
+      const name = data.user?.name || "Unknown User";
+
+      // Cache the name
+      setParticipantNames((prev) => ({
+        ...prev,
+        [userId]: name,
+      }));
+
+      return name;
+    } catch (error) {
+      console.error("Error fetching user name:", error);
+      return "Unknown User";
+    }
+  };
+
+  // Fetch participant names when chats change
+  useEffect(() => {
+    const fetchAllParticipantNames = async () => {
+      const uniqueUserIds = new Set();
+
+      // Collect all unique participant IDs
+      chats.forEach((chat) => {
+        chat.participants.forEach((participantId) => {
+          if (participantId !== user._id) {
+            uniqueUserIds.add(participantId);
+          }
+        });
+      });
+
+      // Fetch names for all unique user IDs
+      for (const userId of uniqueUserIds) {
+        if (!participantNames[userId]) {
+          await getUserName(userId);
+        }
+      }
+    };
+
+    if (chats.length > 0 && user) {
+      fetchAllParticipantNames();
+    }
+  }, [chats, user]);
   const handleSubmit = (e) => {
     e.preventDefault();
     const msg = e.target[0].value;
@@ -191,7 +249,12 @@ export default function WholeChatPage({
                                 {chat.pgName}
                               </p>
                               <p className="text-xs opacity-70 truncate">
-                                PG Chat
+                                {chat.participants
+                                  .filter((id) => id !== user._id)
+                                  .map(
+                                    (id) => participantNames[id] || "Loading..."
+                                  )
+                                  .join(", ") || "PG Chat"}
                               </p>
                             </div>
                           </div>
