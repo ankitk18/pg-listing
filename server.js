@@ -8,7 +8,6 @@ const handle = app.getRequestHandler();
 app.prepare().then(async () => {
   const { default: Chat } = await import("./src/models/chatModel.js");
   const { default: Message } = await import("./src/models/MessageModel.js");
-  const { getPgByPgId } = await import("./src/hooks/useFunc.js");
   const { connectToDatabase } = await import("./src/lib/db.js");
 
   const server = createServer((req, res) => {
@@ -17,9 +16,7 @@ app.prepare().then(async () => {
 
   connectToDatabase()
     .then(() => {
-      console.log("MongoDB connected ");
     })
-
     .catch((err) => {
       console.error("MongoDB connection error:", err);
     });
@@ -31,19 +28,12 @@ app.prepare().then(async () => {
   });
 
   io.on("connection", (socket) => {
-    console.log("User connected:", socket.id);
-
-    // SEND MESSAGE
     socket.on(
       "send-message",
       async ({ msg, currentUser, targetUser, pgId }) => {
         const roomId = [currentUser, targetUser, pgId].sort().join("-");
-        console.log(
-          `Message from ${currentUser} to ${targetUser} in room: ${roomId}`
-        );
-
         try {
-          //  ADDED (save with readBy: [sender])
+          // 🟢 ADDED (save with readBy: [sender])
           const newMessage = await Message.create({
             participants: [currentUser, targetUser].sort(),
             message: {
@@ -51,7 +41,7 @@ app.prepare().then(async () => {
               message: msg,
             },
             pgId,
-            readBy: [currentUser], //  sender already read their own msg
+            readBy: [currentUser],
           });
 
           io.to(roomId).emit("receive-message", {
@@ -62,28 +52,12 @@ app.prepare().then(async () => {
               timeStamp: new Date(),
             },
           });
-
-          //  ADDED (notification to other user)
           socket.to(roomId).emit("notification", {
             from: currentUser,
             pgId,
             message: msg,
           });
         } catch (error) {
-    socket.on("send-message", ({ msg, currentUser, targetUser, pgId }) => {
-      const roomId = [currentUser, targetUser, pgId].sort().join("-");
-      Message.create({
-        participants: [currentUser, targetUser].sort(),
-        message: {
-          senderId: currentUser,
-          message: msg,
-        },
-        pgId: pgId,
-      })
-        .then((message) => {
-          console.log("Message")
-        })
-        .catch((error) => {
           console.error("Error saving message:", error);
         }
       }
@@ -95,8 +69,6 @@ app.prepare().then(async () => {
       async ({ currentUser, targetUser, pgId, pgName }) => {
         const roomId = [currentUser, targetUser, pgId].sort().join("-");
         socket.join(roomId);
-        console.log(`User ${currentUser} joined room: ${roomId}`);
-
         const findChat = await Chat.findOne({
           participants: { $all: [currentUser, targetUser] },
           pgId: pgId,
@@ -132,7 +104,6 @@ app.prepare().then(async () => {
           },
           { $push: { readBy: currentUser } }
         );
-        console.log(`Marked messages as read for ${currentUser}`);
       } catch (err) {
         console.error("Error marking messages as read:", err);
       }
@@ -140,7 +111,6 @@ app.prepare().then(async () => {
 
     // DISCONNECT
     socket.on("disconnect", () => {
-      console.log("User disconnected:", socket.id);
     });
   });
 
