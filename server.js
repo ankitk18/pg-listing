@@ -8,7 +8,6 @@ const handle = app.getRequestHandler();
 app.prepare().then(async () => {
   const { default: Chat } = await import("./src/models/chatModel.js");
   const { default: Message } = await import("./src/models/MessageModel.js");
-  const { getPgByPgId } = await import("./src/hooks/useFunc.js");
   const { connectToDatabase } = await import("./src/lib/db.js");
 
   const server = createServer((req, res) => {
@@ -29,8 +28,6 @@ app.prepare().then(async () => {
   });
 
   io.on("connection", (socket) => {
-
-    // ✅ SEND MESSAGE
     socket.on(
       "send-message",
       async ({ msg, currentUser, targetUser, pgId }) => {
@@ -44,7 +41,7 @@ app.prepare().then(async () => {
               message: msg,
             },
             pgId,
-            readBy: [currentUser], // 🟢 sender already read their own msg
+            readBy: [currentUser],
           });
 
           io.to(roomId).emit("receive-message", {
@@ -55,8 +52,6 @@ app.prepare().then(async () => {
               timeStamp: new Date(),
             },
           });
-
-          // 🟢 ADDED (notification to other user)
           socket.to(roomId).emit("notification", {
             from: currentUser,
             pgId,
