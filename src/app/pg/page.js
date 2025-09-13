@@ -82,6 +82,11 @@ function PgSuggestContent() {
                   <PgCard key={pg.name} pg={pg} />
                 </Link>
               ))}
+              {pgs.length === 0 && (
+                <div className="col-span-1 md:col-span-2 lg:col-span-3 text-center text-gray-500">
+                  No PGs found for "{collegeName}"
+                </div>
+              )}
             </div>
           </div>
         ) : (
