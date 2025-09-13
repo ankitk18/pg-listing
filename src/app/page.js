@@ -47,10 +47,11 @@ export default function Home() {
               onChange={(e) => setCollegeName(e.target.value)}
             />
             <button
+              disabled={results.length == 0}
               onClick={() =>
                 (window.location.href = `/pg?collegeName=${collegeName}`)
               }
-              className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-3 sm:px-4 md:px-6 rounded-full shadow-lg transition whitespace-nowrap text-sm sm:text-base"
+              className = {` bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-3 sm:px-4 md:px-6 rounded-full shadow-lg transition whitespace-nowrap text-sm sm:text-base ${results.length == 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               Search
             </button>
