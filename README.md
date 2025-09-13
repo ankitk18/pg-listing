@@ -24,9 +24,6 @@ It provides a clean, user-friendly interface with quick search, detailed listing
 - **Backend:** Node.js, Express, Socket.io  
 - **Database:** MongoDB  
 - **Storage:** Amazon S3  
-- **Development & Hosting:** DigitalOcean (backend), Vercel (frontend)  
+- **Development & Hosting:** DigitalOcean
 
----
-
-## 📂 Project Structure  
 
