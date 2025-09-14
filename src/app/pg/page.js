@@ -85,6 +85,9 @@ function PgSuggestContent() {
               {pgs.length === 0 && (
                 <div className="col-span-1 md:col-span-2 lg:col-span-3 text-center text-gray-500">
                   No PGs found for "{collegeName}"
+                  <Link href="/" className="text-blue-500 hover:underline ml-1">
+                    Search again
+                  </Link>
                 </div>
               )}
             </div>
