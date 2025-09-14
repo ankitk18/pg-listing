@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 export default function Home() {
   const [collegeName, setCollegeName] = useState("");
   const [debounceCollegeName, setDebounceCollegeName] = useState("");
+  const [visible, setVisible] = useState(true);
   const [results, setResults] = useState([]);
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -45,6 +46,7 @@ export default function Home() {
               className="flex-1 min-w-0 bg-transparent border-none focus:ring-0 outline-none text-white placeholder-white text-sm sm:text-base"
               value={collegeName}
               onChange={(e) => setCollegeName(e.target.value)}
+              onFocus={() => setVisible(true)}
             />
             <button
               disabled={results.length == 0}
@@ -58,7 +60,7 @@ export default function Home() {
           </div>
 
           {/* Search results dropdown */}
-          {results.length > 0 && (
+          {(results.length > 0 && visible) && (
             <ul className="absolute top-full left-0 right-0 mt-2 border border-gray-300 rounded-md p-4 max-h-60 overflow-y-auto bg-[var(--bg)] text-[var(--text)] z-10 shadow-lg">
               {results.map((college) => (
                 <li
@@ -66,7 +68,8 @@ export default function Home() {
                   className="mb-2 p-2 cursor-pointer hover:text-[var(--highlight)] hover:bg-white/5 rounded transition-colors"
                   onClick={() => {
                     setCollegeName(college.name);
-                    setResults([]);
+                    setResults([college]);
+                    setVisible(false);
                   }}
                 >
                   {college.name} - {college.city}, {college.state}

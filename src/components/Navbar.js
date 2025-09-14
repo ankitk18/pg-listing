@@ -6,12 +6,7 @@ import React, { useState, useEffect, use } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getUserByUserId } from "@/hooks/useFunc";
 
-const profileMenuItems = [
-  "My Profile",
-  "Inbox",
-  "Help",
-  "Sign Out",
-];
+const profileMenuItems = ["My Profile", "Inbox", "Help", "Sign Out"];
 // ProfileMenu component for user profile dropdown
 function ProfileMenu(user) {
   const [open, setOpen] = useState(false);
@@ -29,19 +24,23 @@ function ProfileMenu(user) {
     window.location.href = "/login";
   };
   const handeleAction = (label) => {
-    console.log(label);
-    switch(label){
-      case "Sign Out": handleSignOut();
-      break;
-      case "My Profile": window.location.href="/profile";
-      break;
-      case "Inbox": window.location.href="/chats";
-      break
-      case "Help": window.location.href="/";
-      break;
-      default: return;
+    switch (label) {
+      case "Sign Out":
+        handleSignOut();
+        break;
+      case "My Profile":
+        window.location.href = "/profile";
+        break;
+      case "Inbox":
+        window.location.href = "/chats";
+        break;
+      case "Help":
+        window.location.href = "/";
+        break;
+      default:
+        return;
     }
-  }
+  };
   return (
     <div className="relative profile-menu">
       <button
@@ -49,14 +48,15 @@ function ProfileMenu(user) {
         className="flex items-center gap-2 rounded-full border border-[var(--navbar-border)] px-3 py-1 text-[var(--navbar-text)]"
       >
         <span className="h-8 w-8 rounded-full bg-[var(--bg-accent)] flex items-center justify-center text-sm font-bold text-[var(--navbar-text)]">
-          {user.user.profilePicture?(
+          {user.user.profilePicture ? (
             <img
               src={user?.user?.profilePicture}
               alt="Profile"
               className="h-full w-full rounded-full object-cover"
             />
-            
-          ):(user?.user?.name.charAt(0).toUpperCase())}
+          ) : (
+            user?.user?.name.charAt(0).toUpperCase()
+          )}
         </span>
         <motion.span
           animate={{ rotate: open ? 180 : 0 }}
@@ -133,7 +133,6 @@ function NavList() {
 }
 
 export default function ComplexNavbar() {
-  const [isNavOpen, setIsNavOpen] = useState(false);
   const [user, setUser] = useState(null);
   // outside click handler to close mobile nav
   useEffect(() => {
@@ -142,7 +141,6 @@ export default function ComplexNavbar() {
       const fetchUser = async (userId) => {
         try {
           const userData = await getUserByUserId(userId);
-          console.log(userData)
           setUser(userData.user);
         } catch (error) {
           console.error("Error fetching user data:", error);
@@ -151,13 +149,6 @@ export default function ComplexNavbar() {
       };
       fetchUser(parsedUser._id);
     }
-    const handleClickOutside = (event) => {
-      if (!event.target.closest(".mobNav")) {
-        setIsNavOpen(false);
-      }
-    };
-    window.addEventListener("click", handleClickOutside);
-    return () => window.removeEventListener("click", handleClickOutside);
   }, []);
 
   return (
@@ -193,24 +184,44 @@ export default function ComplexNavbar() {
             </motion.button>
           </Link>
         ) : (
-          <ProfileMenu user={user} />
-        )}
-        {user && (
-          <button
-            onClick={() => setIsNavOpen((prev) => !prev)}
-            className="lg:hidden px-2 py-1 rounded border border-[var(--navbar-border)] text-xl font-bold bg-[var(--navbar-hover)]"
-          >
-            {isNavOpen ? "Close" : "Menu"}
-          </button>
+          <div className="flex items-center gap-4">
+            <div className="lg:hidden text-[var(--navbar-text)] w-full flex justify-end gap-4">
+              <Link href="/chats" className="flex items-center gap-1">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="size-8"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z"
+                  />
+                </svg>
+              </Link>
+              <Link href="/add-pg" className="flex items-center gap-1">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="size-8"
+                >
+                  <path d="M19 12h2l-9 -9l-9 9h2v7a2 2 0 0 0 2 2h5.5" />
+                  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2" />
+                  <path d="M16 19h6" />
+                  <path d="M19 16v6" />
+                </svg>
+              </Link>
+            </div>
+            <ProfileMenu user={user} />
+          </div>
         )}
       </div>
-
-      {/* MOBILE NAV */}
-      {isNavOpen && (
-        <div className="absolute flex items-center justify-center top-full right-4 mt-2 w-auto rounded-md border border-[var(--card-border)] bg-[var(--card-bg)] shadow-lg p-3 lg:hidden">
-          <NavList />
-        </div>
-      )}
     </nav>
   );
 }

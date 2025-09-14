@@ -316,7 +316,6 @@ function ChatPageContent() {
                           </p>
                         </div>
                       </div>
-                      {console.log(unreadCounts)}
                       {unreadCounts[chat.pgId] > 0 && (
                         <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
                           {unreadCounts[chat.pgId]}
