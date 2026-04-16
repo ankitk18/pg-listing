@@ -93,6 +93,19 @@ export default function AddPgPage() {
     "Pet Friendly",
   ];
   const [error, setError] = useState(null);
+  const [missingFields, setMissingFields] = useState({});
+
+  const getFieldClassName = (fieldName) => {
+    const baseClass =
+      "w-full p-3 rounded-xl bg-[var(--bg)] text-[var(--text)] border focus:ring-2 focus:outline-none placeholder:text-gray-400";
+
+    if (missingFields[fieldName]) {
+      return `${baseClass} border-red-500 ring-2 ring-red-400`;
+    }
+
+    return `${baseClass} border-[var(--border)] focus:ring-[var(--highlight)]`;
+  };
+
   const handleAmenityChange = (event) => {
     const selectedAmenity = event.target.value;
     //unckeck logic
@@ -100,7 +113,7 @@ export default function AddPgPage() {
       setFormData((prevData) => ({
         ...prevData,
         amenities: prevData.amenities.filter(
-          (amenity) => amenity !== selectedAmenity
+          (amenity) => amenity !== selectedAmenity,
         ),
       }));
       return;
@@ -114,69 +127,109 @@ export default function AddPgPage() {
   const handleFileChange = (event) => {
     const files = event.target.files;
     setImages(files);
+    if (files && files.length > 0) {
+      setMissingFields((prev) => ({ ...prev, images: false }));
+    }
   };
   // Handle form submission
   const handleSubmit = async (event) => {
     event.preventDefault();
     setIsSubmitting(true);
-    const form = new FormData();
-    if (!images || images.length === 0) {
-      setError("Please upload an image.");
-      setIsSubmitting(false);
-      return;
-    }
-    if (images.length > 1) {
-      setError("Please upload only one image.");
-      setIsSubmitting(false);
-      return;
-    }
-    form.append("file", images[0]);
-    const uploadResponse = await fetch("/api/uploadImage", {
-      method: "POST",
-      body: form,
-    });
-    if (!uploadResponse.ok) {
-      const errorData = await uploadResponse.json();
-      setError(errorData.message);
-      console.error("Image upload failed:", errorData.message);
-      return;
-    }
-    const uploadData = await uploadResponse.json();
-    setFormData((prevData) => ({
-      ...prevData,
-      images: uploadData.url,
-    }));
-    const response = await fetch("/api/pg", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        ...formData,
-        userId: user._id,
-        images: uploadData.url,
-      }),
-    });
-    if (response.ok) {
-      const data = await response.json();
-      setSuccess("PG listing added successfully!");
-      setFormData({
-        name: "",
-        nearByCollege: "",
-        address: "",
-        rent: "",
-        description: "",
-        images: "",
-        amenities: [],
+    try {
+      const nextMissingFields = {
+        name: !formData.name.trim(),
+        state: !selectedState.trim(),
+        nearByCollege: !selectedCollege.trim(),
+        address: !formData.address.trim(),
+        rent: !String(formData.rent).trim(),
+        description: !formData.description.trim(),
+      };
+
+      const missingLabels = [];
+      if (nextMissingFields.name) missingLabels.push("PG Name");
+      if (nextMissingFields.state) missingLabels.push("State");
+      if (nextMissingFields.nearByCollege)
+        missingLabels.push("Near By College");
+      if (nextMissingFields.address) missingLabels.push("Address");
+      if (nextMissingFields.rent) missingLabels.push("Monthly Rent");
+      if (nextMissingFields.description) missingLabels.push("Description");
+
+      if (missingLabels.length > 0) {
+        setMissingFields((prev) => ({ ...prev, ...nextMissingFields }));
+        setError(`Please fill required fields: ${missingLabels.join(", ")}`);
+        setSuccess(null);
+        return;
+      }
+
+      setMissingFields({});
+      const form = new FormData();
+      if (!images || images.length === 0) {
+        setMissingFields((prev) => ({ ...prev, images: true }));
+        setError("Please upload an image.");
+        return;
+      }
+      if (images.length > 1) {
+        setMissingFields((prev) => ({ ...prev, images: false }));
+        setError("Please upload only one image.");
+        return;
+      }
+      form.append("file", images[0]);
+
+      const uploadResponse = await fetch("/api/uploadImage", {
+        method: "POST",
+        body: form,
       });
-      setError(null);
-      // Reset the form data
-      document.querySelector("form").reset();
-    }
-    if (!response.ok) {
+
+      if (!uploadResponse.ok) {
+        const errorData = await uploadResponse.json();
+        setError(errorData.message);
+        console.error("Image upload failed:", errorData.message);
+        return;
+      }
+
+      const uploadData = await uploadResponse.json();
+      setFormData((prevData) => ({
+        ...prevData,
+        images: uploadData.url,
+      }));
+
+      const response = await fetch("/api/pg", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...formData,
+          userId: user._id,
+          images: uploadData.url,
+        }),
+      });
+
+      if (response.ok) {
+        await response.json();
+        setSuccess("PG listing added successfully!");
+        setMissingFields({});
+        setFormData({
+          name: "",
+          nearByCollege: "",
+          address: "",
+          rent: "",
+          description: "",
+          images: "",
+          amenities: [],
+        });
+        setError(null);
+        // Reset the form data
+        document.querySelector("form").reset();
+        return;
+      }
+
       setSuccess(null);
       const errorData = await response.json();
+      console.log("Error adding PG listing:", errorData.message);
       setError(errorData.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
   useEffect(() => {
@@ -195,7 +248,7 @@ export default function AddPgPage() {
       }
       try {
         const response = await fetch(
-          `/api/college?collegeName=${debounceCollegeName}&state=${selectedState}`
+          `/api/college?collegeName=${debounceCollegeName}&state=${selectedState}`,
         );
         if (response.ok) {
           const data = await response.json();
@@ -227,15 +280,25 @@ export default function AddPgPage() {
             name="name"
             placeholder="🏷️ PG Name"
             required
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="w-full p-3 rounded-xl bg-[var(--bg)] text-[var(--text)] border border-[var(--border)] focus:ring-2 focus:ring-[var(--highlight)] focus:outline-none placeholder:text-gray-400"
+            onChange={(e) => {
+              setFormData({ ...formData, name: e.target.value });
+              if (e.target.value.trim()) {
+                setMissingFields((prev) => ({ ...prev, name: false }));
+              }
+            }}
+            className={getFieldClassName("name")}
           />
           <select
             name="state"
             required
-            onChange={(e) => { setSelectedState(e.target.value);}}
+            onChange={(e) => {
+              setSelectedState(e.target.value);
+              if (e.target.value.trim()) {
+                setMissingFields((prev) => ({ ...prev, state: false }));
+              }
+            }}
             value={selectedState}
-            className="w-full p-3 rounded-xl bg-[var(--bg)] text-[var(--text)] border border-[var(--border)] focus:ring-2 focus:ring-[var(--highlight)] focus:outline-none placeholder:text-gray-400"
+            className={getFieldClassName("state")}
           >
             <option value="" disabled>
               🗺️ Select State
@@ -253,10 +316,13 @@ export default function AddPgPage() {
             disabled={!selectedState}
             required
             value={selectedCollege}
-            onChange={(e) =>
-              setSelectedCollege(e.target.value)
-            }
-            className="w-full p-3 rounded-xl bg-[var(--bg)] text-[var(--text)] border border-[var(--border)] focus:ring-2 focus:ring-[var(--highlight)] focus:outline-none placeholder:text-gray-400"
+            onChange={(e) => {
+              setSelectedCollege(e.target.value);
+              if (e.target.value.trim()) {
+                setMissingFields((prev) => ({ ...prev, nearByCollege: false }));
+              }
+            }}
+            className={getFieldClassName("nearByCollege")}
           />
           {resultColleges.length > 0 && (
             <ul className="border border-gray-300 rounded-md p-4 w-full max-h-60 overflow-y-auto bg-[var(--bg)] text-[var(--text)] mb-4">
@@ -270,6 +336,10 @@ export default function AddPgPage() {
                       nearByCollege: college.name,
                     });
                     setSelectedCollege(college.name);
+                    setMissingFields((prev) => ({
+                      ...prev,
+                      nearByCollege: false,
+                    }));
                     setResultColleges([]);
                   }}
                 >
@@ -283,10 +353,13 @@ export default function AddPgPage() {
             name="address"
             placeholder="📍 Address"
             required
-            onChange={(e) =>
-              setFormData({ ...formData, address: e.target.value })
-            }
-            className="w-full p-3 rounded-xl bg-[var(--bg)] text-[var(--text)] border border-[var(--border)] focus:ring-2 focus:ring-[var(--highlight)] focus:outline-none placeholder:text-gray-400"
+            onChange={(e) => {
+              setFormData({ ...formData, address: e.target.value });
+              if (e.target.value.trim()) {
+                setMissingFields((prev) => ({ ...prev, address: false }));
+              }
+            }}
+            className={getFieldClassName("address")}
           />
 
           <input
@@ -294,18 +367,26 @@ export default function AddPgPage() {
             name="rent"
             placeholder="💰 Monthly Rent (in INR)"
             required
-            onChange={(e) => setFormData({ ...formData, rent: e.target.value })}
-            className="w-full p-3 rounded-xl bg-[var(--bg)] text-[var(--text)] border border-[var(--border)] focus:ring-2 focus:ring-[var(--highlight)] focus:outline-none placeholder:text-gray-400"
+            onChange={(e) => {
+              setFormData({ ...formData, rent: e.target.value });
+              if (String(e.target.value).trim()) {
+                setMissingFields((prev) => ({ ...prev, rent: false }));
+              }
+            }}
+            className={getFieldClassName("rent")}
           />
           <textarea
             name="description"
             placeholder="📝 Description"
             required
-            onChange={(e) =>
-              setFormData({ ...formData, description: e.target.value })
-            }
+            onChange={(e) => {
+              setFormData({ ...formData, description: e.target.value });
+              if (e.target.value.trim()) {
+                setMissingFields((prev) => ({ ...prev, description: false }));
+              }
+            }}
             rows="4"
-            className="w-full p-3 rounded-xl bg-[var(--bg)] text-[var(--text)] h-24 border border-[var(--border)] focus:ring-2 focus:ring-[var(--highlight)] focus:outline-none placeholder:text-gray-400"
+            className={`${getFieldClassName("description")} h-24`}
           />
 
           <input
@@ -313,7 +394,11 @@ export default function AddPgPage() {
             name="images"
             onChange={handleFileChange}
             accept="image/*"
-            className="w-full p-3 rounded-xl bg-[var(--bg)] text-[var(--text)] border border-[var(--border)] placeholder:text-gray-400"
+            className={`w-full p-3 rounded-xl bg-[var(--bg)] text-[var(--text)] border placeholder:text-gray-400 ${
+              missingFields.images
+                ? "border-red-500 ring-2 ring-red-400"
+                : "border-[var(--border)]"
+            }`}
           />
 
           <div className="space-y-3">
@@ -351,15 +436,15 @@ export default function AddPgPage() {
           </motion.button>
         </form>
         {success && (
-            <Popup 
+          <Popup
             isOpen={showPopup}
-            onClose={() => setShowPopup(false)} 
+            onClose={() => setShowPopup(false)}
             title="PG Listing Submitted!"
-            message="Your PG listing has been submitted and is under review. It will be live on the platform once approved. Thank you for contributing to GradStay!" />
+            message="Your PG listing has been submitted and is under review. It will be live on the platform once approved. Thank you for contributing to GradStay!"
+          />
         )}
         {error && (
           <div className="mt-4 text-red-500 text-center">
-            {setIsSubmitting(false)}
             <p>Error: {error}</p>
           </div>
         )}
